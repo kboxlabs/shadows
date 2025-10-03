@@ -68,7 +68,7 @@ window.onload = function () {
       loot: null
     },
     'Shop': {
-      description: 'A crooked shopkeeper grins. Potions and gear line the shelves.',
+      description: 'Abby the Shopkeeper smiles. Potions and gear line their shelves.',
       exits: { west: 'Town Square' },
       shop: true,
       loot: null
