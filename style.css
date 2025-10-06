@@ -1,0 +1,136 @@
+body {
+  background-color: black;
+  color: #0f0;
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Centered game container */
+#gameContainer {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Console window */
+#console {
+  background-color: black;
+  border: 2px solid #060;   /* toned-down border */
+  padding: 10px;
+  width: 100%;
+  height: 400px;
+  overflow-y: scroll;
+  white-space: pre-wrap;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+/* Command input line */
+#inputLine {
+  width: 100%;
+  padding: 4px;
+  font-size: 14px;
+  background-color: black;
+  color: #0f0;
+  border: 2px solid #060;   /* toned-down border */
+  font-family: 'Courier New', Courier, monospace;
+  box-sizing: border-box;
+  margin-top: 10px;
+}
+
+/* Log window */
+#logWindow {
+  background-color: black;
+  border: 2px solid #060;   /* toned-down border */
+  padding: 10px;
+  width: 100%;
+  height: 150px;
+  overflow-y: scroll;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+/* Toggle button */
+#logToggle {
+  background-color: black;
+  color: #0f0;
+  border: 2px solid #060;   /* toned-down border */
+  padding: 5px 10px;
+  margin: 5px 0;
+  font-family: 'Courier New', Courier, monospace;
+  cursor: pointer;
+  align-self: flex-start;
+}
+#logToggle:hover {
+  background-color: #111;
+}
+
+/* Combat border highlight (no glowing shadows now) */
+.inCombatGlow {
+  border-color: #0f0;  /* crisp green outline */
+}
+.lowHpGlow {
+  border-color: #f00;  /* crisp red outline */
+}
+
+/* --- Subtle CRT scanline + flicker overlay --- */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 255, 0, 0.04),
+    rgba(0, 255, 0, 0.04) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  z-index: 9999;
+  animation: crtFlicker 0.12s infinite;
+}
+
+@keyframes crtFlicker {
+  0%   { opacity: 0.95; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.97; }
+}
+
+/* --- CRT power-on animation --- */
+body {
+  animation: crtPowerOn 2s ease-out;
+}
+
+@keyframes crtPowerOn {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.02); /* collapsed into a thin line */
+    filter: brightness(400%) saturate(300%) blur(10px);
+  }
+  20% {
+    opacity: 1;
+    transform: scaleY(0.2);  /* expanding vertically */
+    filter: brightness(250%) saturate(200%) blur(4px);
+  }
+  50% {
+    transform: scaleY(1.05); /* slight overshoot for realism */
+    filter: brightness(180%) saturate(150%) blur(2px);
+  }
+  80% {
+    transform: scaleY(1);
+    filter: brightness(120%) saturate(120%) blur(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: none; /* normal view */
+    filter: none;
+  }
+}

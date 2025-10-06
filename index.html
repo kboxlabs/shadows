@@ -1,80 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Spooky MUD RPG</title>
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      background: #000;
-      color: #0f0;
-      font-family: 'Courier New', monospace;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #logToggle {
-      background: #222;
-      color: #0f0;
-      border: none;
-      padding: 5px 10px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.9em;
-    }
-
-    #logWindow {
-      height: 120px;
-      overflow-y: auto;
-      background: #111;
-      color: #ccc;
-      font-size: 0.9em;
-      padding: 10px;
-      border-bottom: 1px solid #0f0;
-      font-family: 'Courier New', monospace;
-    }
-
-    .log-entry { margin-bottom: 4px; }
-    .log-move   { color: #0ff; }
-    .log-combat { color: #f00; }
-    .log-heal   { color: #0f0; }
-    .log-item   { color: #ff0; }
-    .log-info   { color: #ccc; }
-
-    #console {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      white-space: pre-wrap;
-    }
-
-    #inputWrapper {
-      border-top: 1px solid #0f0;
-      padding: 10px;
-      background: #000;
-    }
-
-    #inputLine {
-      width: 100%;
-      background: transparent;
-      border: none;
-      color: #0f0;
-      font-size: 1em;
-      font-family: inherit;
-      outline: none;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>Shadows of Kalendale</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <button id="logToggle">Hide Log</button>
-  <div id="logWindow"></div>
-  <div id="console"></div>
-  <div id="inputWrapper">
-    <input id="inputLine" placeholder="Type your command here..." title="Game command input" autofocus />
+  <div id="gameContainer">
+    <button id="logToggle">Hide Log</button>
+    <div id="logWindow"></div>
+
+    <div id="console"></div>
+
+    <input type="text" id="inputLine" placeholder="Type a command..." autocomplete="off">
   </div>
-  <script src="game.js"></script>
+
+  <script type="module" src="game.js"></script>
 </body>
 </html>
