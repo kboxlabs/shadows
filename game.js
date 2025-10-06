@@ -215,7 +215,7 @@ window.onload = function () {
       for (const [item, data] of Object.entries(shopItems)) {
         log(`- ${item} (${data.price} gold)`);
       }
-      log('The shopkeeper will also buy any item you bring him.');
+      log('The shopkeeper will also buy any item you bring her.');
     }
 
     if (loc.loot && Object.keys(loc.loot).length > 0) {
@@ -559,3 +559,4 @@ window.onload = function () {
     log('Enter your name:');
   }
 };
+
