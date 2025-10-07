@@ -5,17 +5,9 @@ body {
   margin: 0;
   padding: 20px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;   /* stack vertically */
+  align-items: stretch;     /* each child fills width */
   animation: crtPowerOn 2s ease-out;
-}
-
-/* Centered game container */
-#gameContainer {
-  width: 100%;
-  max-width: 900px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
 }
 
 /* Console window */
@@ -34,7 +26,7 @@ body {
 /* Command input line */
 #inputLine {
   width: 100%;
-  padding: 4px;
+  padding: 6px;
   font-size: 14px;
   background-color: black;
   color: #0f0;
@@ -47,12 +39,12 @@ body {
 /* Log window */
 #logWindow {
   font-family: monospace;
-  font-size: 0.75em;   /* smaller than console */
+  font-size: 0.75em;   /* smaller system feed */
   background-color: black;
   border: 2px solid #060;
   padding: 5px;
   width: 100%;
-  height: 105px;       /* ~6 lines visible */
+  height: 105px;       /* ~6 entries visible */
   overflow-y: auto;    /* unlimited scroll */
   box-sizing: border-box;
   margin-bottom: 10px;
