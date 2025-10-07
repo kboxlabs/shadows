@@ -7,15 +7,19 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="gameContainer">
-    <button id="logToggle">Hide Log</button>
-    <div id="logWindow"></div>
 
-    <div id="console"></div>
+<!--
+  ***uncomment this to add title header***
+  <h1>Spooky MUD RPG</h1>
+-->
 
-    <input type="text" id="inputLine" placeholder="Type a command..." autocomplete="off">
-  </div>
+  <button id="logToggle">Show Log</button>
+  <div id="logWindow" style="display:none;"></div>
 
-  <script type="module" src="game.js"></script>
+  <div id="console"></div>
+
+  <input type="text" id="inputLine" placeholder="Type a command..." autocomplete="off">
+
+  <script src="game.js"></script>
 </body>
 </html>
