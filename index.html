@@ -1,31 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Shadows of Kalendale</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="gameContainer">
+    <button id="logToggle">Hide Log</button>
+    <div id="logWindow"></div>
 
-  <!--
-    ***uncomment this to add title header***
-    <h1>Spooky MUD RPG</h1>
-  -->
+    <div id="console"></div>
 
-  <button id="logToggle">Show Log</button>
-  <div id="logWindow" style="display:none;"></div>
+    <input type="text" id="inputLine" placeholder="Type a command..." autocomplete="off">
+  </div>
 
-  <div id="console"></div>
-
-  <input
-    type="text"
-    id="inputLine"
-    placeholder="Type a command..."
-    autocomplete="off"
-  />
-
-  <!-- IMPORTANT: load as a module so imports work -->
   <script type="module" src="game.js"></script>
 </body>
 </html>
