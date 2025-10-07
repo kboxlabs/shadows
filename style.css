@@ -6,6 +6,7 @@ body {
   padding: 20px;
   display: flex;
   justify-content: center;
+  animation: crtPowerOn 2s ease-out;
 }
 
 /* Centered game container */
@@ -20,7 +21,7 @@ body {
 /* Console window */
 #console {
   background-color: black;
-  border: 2px solid #060;   /* toned-down border */
+  border: 2px solid #060;
   padding: 10px;
   width: 100%;
   height: 400px;
@@ -37,7 +38,7 @@ body {
   font-size: 14px;
   background-color: black;
   color: #0f0;
-  border: 2px solid #060;   /* toned-down border */
+  border: 2px solid #060;
   font-family: 'Courier New', Courier, monospace;
   box-sizing: border-box;
   margin-top: 10px;
@@ -45,21 +46,65 @@ body {
 
 /* Log window */
 #logWindow {
+  font-family: monospace;
+  font-size: 0.75em;   /* smaller than console */
   background-color: black;
-  border: 2px solid #060;   /* toned-down border */
-  padding: 10px;
+  border: 2px solid #060;
+  padding: 5px;
   width: 100%;
-  height: 150px;
-  overflow-y: scroll;
+  height: 105px;       /* ~6 lines visible */
+  overflow-y: auto;    /* unlimited scroll */
   box-sizing: border-box;
   margin-bottom: 10px;
+}
+
+.log-entry {
+  margin: 2px 0;
+  padding: 2px 4px;
+  border-left: 3px solid #666;
+  color: #ccc;
+}
+
+.log-time {
+  color: #777; /* dimmer timestamps */
+  margin-right: 5px;
+}
+
+/* Movement updates */
+.log-move {
+  border-left-color: #2ecc71;  /* green */
+  color: #a5f7b0;
+}
+
+/* Item actions */
+.log-item {
+  border-left-color: #f39c12;  /* orange */
+  color: #ffd699;
+}
+
+/* Combat messages */
+.log-combat {
+  border-left-color: #e74c3c;  /* red */
+  color: #f5a3a3;
+}
+
+/* Healing */
+.log-heal {
+  border-left-color: #3498db;  /* blue */
+  color: #a8d4ff;
+}
+
+/* General info */
+.log-info {
+  border-left-color: #9b59b6;  /* purple */
+  color: #e0c4f7;
 }
 
 /* Toggle button */
 #logToggle {
   background-color: black;
   color: #0f0;
-  border: 2px solid #060;   /* toned-down border */
+  border: 2px solid #060;
   padding: 5px 10px;
   margin: 5px 0;
   font-family: 'Courier New', Courier, monospace;
@@ -70,7 +115,7 @@ body {
   background-color: #111;
 }
 
-/* Combat border highlight (no glowing shadows now) */
+/* Combat border highlight */
 .inCombatGlow {
   border-color: #0f0;  /* crisp green outline */
 }
@@ -78,7 +123,7 @@ body {
   border-color: #f00;  /* crisp red outline */
 }
 
-/* --- Subtle CRT scanline + flicker overlay --- */
+/* --- CRT scanline + flicker overlay --- */
 body::before {
   content: "";
   position: fixed;
@@ -105,23 +150,19 @@ body::before {
 }
 
 /* --- CRT power-on animation --- */
-body {
-  animation: crtPowerOn 2s ease-out;
-}
-
 @keyframes crtPowerOn {
   0% {
     opacity: 0;
-    transform: scaleY(0.02); /* collapsed into a thin line */
+    transform: scaleY(0.02);
     filter: brightness(400%) saturate(300%) blur(10px);
   }
   20% {
     opacity: 1;
-    transform: scaleY(0.2);  /* expanding vertically */
+    transform: scaleY(0.2);
     filter: brightness(250%) saturate(200%) blur(4px);
   }
   50% {
-    transform: scaleY(1.05); /* slight overshoot for realism */
+    transform: scaleY(1.05);
     filter: brightness(180%) saturate(150%) blur(2px);
   }
   80% {
@@ -130,7 +171,7 @@ body {
   }
   100% {
     opacity: 1;
-    transform: none; /* normal view */
+    transform: none;
     filter: none;
   }
 }
