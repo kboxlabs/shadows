@@ -628,7 +628,10 @@ window.onload = function () {
     loadGame(true);
   } else {
     localStorage.removeItem('kalendaleReset');
+    // Pad down with blank lines
+    consoleEl.innerText = "\n\n\n\n\n\n\n\n\n\n";
     log('KBOX Labs welcomes you to the Shadows of Kalendale RPG!');
     log('Enter your name:');
   }
 };
+
