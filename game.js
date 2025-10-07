@@ -21,6 +21,11 @@ window.onload = function () {
   const logWindow = document.getElementById('logWindow');
   const logToggle = document.getElementById('logToggle');
 
+  // Start hidden by default
+  let logVisible = false;
+  logWindow.style.display = 'none';
+  if (logToggle) logToggle.textContent = 'Show Log';
+  
   // --- Log functions ---
   function log(text) {
     consoleEl.innerText += `\n${text}`;
@@ -634,4 +639,5 @@ window.onload = function () {
     log('Enter your name:');
   }
 };
+
 
