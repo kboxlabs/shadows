@@ -127,7 +127,13 @@ window.onload = function () {
     player = data.player;
     world = data.world;
     roomCount = data.roomCount;
-    step = (typeof data.step === 'number') ? data.step : 3;
+    // Ensure we don't get stuck mid-creation
+		if (typeof data.step === 'number' && data.step >= 3) {
+			step = data.step;
+		} else {
+			step = 3; // force ready-to-play if save is incomplete
+		}
+		pendingConfirm = null;
     pendingConfirm = null;
     inputEl.disabled = false;
     updateGlow();
@@ -609,6 +615,7 @@ window.onload = function () {
       if (!['warrior', 'mage', 'rogue'].includes(choice)) return log('Invalid class. Choose: Warrior, Mage, Rogue');
       player.class = choice.charAt(0).toUpperCase() + choice.slice(1);
       step = 3;
+			saveGame();
       log(`Class set to ${player.class}. You begin in the Town Square.`);
       describeLocation();
       return;
@@ -620,18 +627,28 @@ window.onload = function () {
   // --- Quick save on quit ---
   window.addEventListener('beforeunload', function () { saveGame(); });
 
-  // --- Auto-load save on start (unless just reset) ---
-  const resetFlag = localStorage.getItem('kalendaleReset');
-  const saved = localStorage.getItem('kalendaleSave');
-  if (saved && !resetFlag) {
-    log("Loading your last saved game...");
-    loadGame(true);
-  } else {
-    localStorage.removeItem('kalendaleReset');
-    // Pad down with blank lines
-    consoleEl.innerText = "\n\n\n\n\n\n\n\n";  
-    log('KBOX Labs welcomes you to the Shadows of Kalendale RPG!');
-    log('Enter your name:');
-  }
-};
+	// --- Auto-load save ---
+	const resetFlag = localStorage.getItem('kalendaleReset');
+	const saved = localStorage.getItem('kalendaleSave');
+	if (saved && !resetFlag) {
+		const data = JSON.parse(saved);
 
+		// Only reject if explicitly incomplete (step < 3)
+		if (typeof data.step === "number" && data.step >= 3) {
+			log("Loading your last saved game...");
+			loadGame(true);
+		} else {
+			// Restart creation
+			localStorage.removeItem('kalendaleSave');
+			localStorage.removeItem('kalendaleReset');
+			log('KBOX Labs welcomes you to the Shadows of Kalendale RPG!');
+			log('Enter your name:');
+			step = 0;
+		}
+	} else {
+		localStorage.removeItem('kalendaleReset');
+		log('KBOX Labs welcomes you to the Shadows of Kalendale RPG!');
+		log('Enter your name:');
+		step = 0;
+	}
+};

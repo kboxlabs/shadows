@@ -13,12 +13,16 @@
     <h1>Spooky MUD RPG</h1>
   -->
 
-  <button id="logToggle">Show Log</button>
-  <div id="logWindow" style="display:none;"></div>
+  <div id="gameContainer">
 
-  <div id="console"></div>
+    <button id="logToggle">Show Log</button>
+    <div id="logWindow" style="display:none;"></div>
 
-  <input type="text" id="inputLine" placeholder="Type a command..." autocomplete="off">
+    <div id="console"></div>
+
+    <input type="text" id="inputLine" placeholder="Type a command..." autocomplete="off">
+
+  </div>
 
   <!-- important: must load as module so imports in game.js work -->
   <script type="module" src="game.js"></script>

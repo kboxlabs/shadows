@@ -10,6 +10,16 @@ body {
   animation: crtPowerOn 2s ease-out;
 }
 
+/* Entire game display */
+#gameContainer {
+  width: 100%;
+  max-width: 900px; /* keeps things reasonable on ultrawide */
+  margin: 0 auto; /* centers horizontally */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
 /* Console window */
 #console {
   background-color: black;
