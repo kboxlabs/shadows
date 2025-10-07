@@ -23,8 +23,12 @@ window.onload = function () {
 
   // Start hidden by default
   let logVisible = false;
-  logWindow.style.display = 'none';
-  if (logToggle) logToggle.textContent = 'Show Log';
+  if (logWindow) {
+    logWindow.style.display = 'none';
+  }
+  if (logToggle) {
+    logToggle.textContent = 'Show Log';
+  }
   
   // --- Log functions ---
   function log(text) {
@@ -639,5 +643,6 @@ window.onload = function () {
     log('Enter your name:');
   }
 };
+
 
 
