@@ -31,13 +31,14 @@ body {
   white-space: pre-wrap;
   box-sizing: border-box;
   margin-bottom: 10px;
+	font-size: 14px; /* main game text size */
 }
 
 /* Command input line */
 #inputLine {
   width: 100%;
   padding: 6px;
-  font-size: 14px;
+  font-size: 12px; /* input text size */
   background-color: black;
   color: #0f0;
   border: 2px solid #060;

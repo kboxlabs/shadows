@@ -569,17 +569,18 @@ window.onload = function () {
         if (answer === 'yes') {
           pendingConfirm = null;
 
-          // Acknowledge the name
-          log(` `);
-          log(`"${player.name}..." the voice repeats softly.`);
+					// Confirm name
+					log(` `);
+					logFade([`"${player.name}..." the voice repeats softly.`], 2200);
+					step = 0.5; // temporary state between name and race selection
 
           // Lantern glow while the race intro fades in
           consoleEl.classList.add('lanternGlow');
 
           const raceIntroLines = [
             " ",
-            "Lantern light flickers — revealing faint features not quite human, not yet known.",
-            "The voice hums thoughtfully, as if weighing your answer.",
+            "Candle light flickers — revealing faint features not quite human, not yet known.",
+            "The voice hums pensively, as if weighing your answer.",
             '"Tell me... what manner of being stands before me?"',
             " "
           ];
@@ -590,6 +591,7 @@ window.onload = function () {
           setTimeout(() => {
             consoleEl.classList.remove('lanternGlow');
             log("(Human, Elf, Dwarf, Orc, Halfling, Half-Elf)");
+					  log(" ");
             step = 1;       // now actually in race selection
             saveGame();
           }, raceIntroLines.length * 3000 + 800);
@@ -600,7 +602,7 @@ window.onload = function () {
         if (answer === 'no') {
           player.name = '';
           pendingConfirm = null;
-          log("Very well... then tell me again — what is your name?");
+          log("Then tell me again — what is your name?");
           return;
         }
 
@@ -629,7 +631,7 @@ window.onload = function () {
 
       // Confirm name
       log(` `);
-      log(`"${player.name}..." the voice repeats softly.`);
+      logFade([`"${player.name}..." the voice repeats softly.`], 2200);
       step = 0.5; // temporary state between name and race selection
 
       // Start lantern flicker effect
@@ -638,8 +640,8 @@ window.onload = function () {
       // Fade-in narrative lines before race selection
       const raceIntroLines = [
           " ",
-          "Lantern light flickers — revealing faint features not quite human, not yet known.",
-          "The voice hums thoughtfully, as if weighing your answer.",
+          "Candle light flickers — revealing faint features not quite human, not yet known.",
+          "The voice hums pensively, as if weighing your answer.",
           '"Tell me... what manner of being stands before me?"',
           " "
       ];
@@ -650,6 +652,7 @@ window.onload = function () {
       setTimeout(() => {
         consoleEl.classList.remove('lanternGlow');
         log("(Human, Elf, Dwarf, Orc, Halfling, Half-Elf)");
+				log(" ");
         step = 1;          // now actually enter race-selection phase
         saveGame();
       }, raceIntroLines.length * 3000 + 800);
@@ -660,7 +663,7 @@ window.onload = function () {
     if (pendingConfirm && pendingConfirm.type === 'name' && cmd.toLowerCase() === 'no') {
       player.name = '';
       pendingConfirm = null;
-      log("Very well... then tell me again — what is your name?");
+      log("Then tell me again — what is your name?");
       return;
     }
 
@@ -677,10 +680,10 @@ window.onload = function () {
 
       const awakenLines = [
         " ",
-        "The lantern’s glow dissolves into daylight.",
         "The voice fades to memory as you open your eyes.",
-        "Cobblestones press beneath your boots — the town of Kalendale awaits.",
-        " "
+        "The glow of lanterns flicker in the evening mist.",
+				"Dusk has fallen on the small town of Kalendale.",
+        "..."
       ];
 
       logFade(awakenLines, 3000);
@@ -688,9 +691,12 @@ window.onload = function () {
       setTimeout(() => {
         consoleEl.classList.remove('lanternGlow');
         consoleEl.classList.remove('ambientFlicker'); // stop flicker completely
-        log("You awaken in the Town Square, ready to begin your journey.");
+				log(" ");
         step = 3;
         saveGame();
+				log(" ");
+        log("You have awoken in the Town Square, ready to begin your journey...");
+				log(" ");				
         describeLocation();
       }, awakenLines.length * 3000 + 800);
 
@@ -719,9 +725,11 @@ window.onload = function () {
 			localStorage.removeItem('kalendaleReset');
       const introLines = [
         " ",
-        "The fog stirs around you as shapes drift in and out of sight. Lantern light flickers somewhere in the dark.",
+        "The fog stirs around you as shapes drift in and out of sight. Candle light flickers somewhere in the dark.",
         "A soft, distant voice breaks the silence...",
-        '"Traveler..."',
+        '"Traveler...?"',
+				'"No..."',
+				'"Wanderer..."',
         '"By what name do they call you?"'
       ];
 
@@ -739,9 +747,11 @@ window.onload = function () {
 		localStorage.removeItem('kalendaleReset');
     const introLines = [
       " ",
-      "The fog stirs around you as shapes drift in and out of sight. Lantern light flickers somewhere in the dark.",
+      "The fog stirs around you as shapes drift in and out of sight. Candle light flickers somewhere in the dark.",
       "A soft, distant voice breaks the silence...",
-      '"Traveler..."',
+      '"Traveler...?"',
+		  '"No..."',
+			'"Wanderer..."',
       '"By what name do they call you?"'
     ];
 
