@@ -117,6 +117,34 @@ body {
   background-color: #111;
 }
 
+/* --- Fade-in animation for intro lines with subtle CRT glow --- */
+.fadeLine {
+  opacity: 0;
+  animation: fadeInText 2.5s ease forwards;
+}
+
+@keyframes fadeInText {
+  0% {
+    opacity: 0;
+    text-shadow: 0 0 0px #0f0;
+    filter: blur(2px) brightness(130%);
+  }
+  40% {
+    opacity: 0.6;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+  }
+  70% {
+    opacity: 0.9;
+    text-shadow: 0 0 4px rgba(0, 255, 0, 0.4);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 2px rgba(0, 255, 0, 0.2);
+    filter: blur(0);
+  }
+}
+
 /* Combat border highlight */
 .inCombatGlow {
   border-color: #0f0;  /* crisp green outline */
@@ -176,4 +204,49 @@ body::before {
     transform: none;
     filter: none;
   }
+}
+
+/* --- Enhanced Ambient CRT Flicker --- */
+@keyframes ambientFlicker {
+  0%   { opacity: 0.92; filter: brightness(100%) saturate(100%); text-shadow: 0 0 1px rgba(0,255,0,0.1); }
+  20%  { opacity: 0.96; filter: brightness(105%) saturate(120%); text-shadow: 0 0 3px rgba(0,255,0,0.25); }
+  40%  { opacity: 0.90; filter: brightness(95%) saturate(90%); text-shadow: 0 0 2px rgba(0,255,0,0.15); }
+  60%  { opacity: 0.98; filter: brightness(110%) saturate(130%); text-shadow: 0 0 4px rgba(0,255,0,0.35); }
+  80%  { opacity: 0.94; filter: brightness(100%) saturate(100%); text-shadow: 0 0 2px rgba(0,255,0,0.2); }
+  100% { opacity: 0.96; filter: brightness(105%) saturate(115%); text-shadow: 0 0 3px rgba(0,255,0,0.25); }
+}
+
+.ambientFlicker {
+  animation: ambientFlicker 2.5s infinite ease-in-out;
+}
+
+/* --- Fade-out for ambient flicker when game begins --- */
+@keyframes fadeOutFlicker {
+  0% {
+    opacity: 1;
+    filter: brightness(105%) saturate(115%);
+    text-shadow: 0 0 3px rgba(0,255,0,0.25);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(100%) saturate(100%);
+    text-shadow: 0 0 0 rgba(0,255,0,0);
+  }
+}
+
+.fadeOutFlicker {
+  animation: fadeOutFlicker 2s ease forwards;
+}
+
+/* --- Lantern flicker background effect --- */
+@keyframes lanternFlicker {
+  0%   { background-color: rgba(0,20,0,0.1); box-shadow: 0 0 0px rgba(255,220,100,0.0); }
+  25%  { background-color: rgba(60,40,0,0.15); box-shadow: 0 0 25px rgba(255,220,100,0.3); }
+  50%  { background-color: rgba(30,20,0,0.1); box-shadow: 0 0 40px rgba(255,200,80,0.4); }
+  75%  { background-color: rgba(50,30,0,0.12); box-shadow: 0 0 20px rgba(255,220,100,0.25); }
+  100% { background-color: rgba(0,20,0,0.1); box-shadow: 0 0 0px rgba(255,220,100,0.0); }
+}
+
+.lanternGlow {
+  animation: lanternFlicker 2.5s ease-in-out 2;
 }

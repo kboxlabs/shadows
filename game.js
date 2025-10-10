@@ -1,6 +1,8 @@
 import { itemData, shopItems } from './data/items.js';
 import { monsters } from './data/monsters.js';
 import { descriptions, milestoneRooms } from './data/rooms.js';
+import { town } from './data/town.js';
+
 
 // --- Utility to normalize item names (case-insensitive input, canonical output) ---
 function normalizeItemName(input) {
@@ -25,6 +27,23 @@ window.onload = function () {
   function log(text) {
     consoleEl.innerText += `\n${text}`;
     consoleEl.scrollTop = consoleEl.scrollHeight;
+  }
+
+  // --- Slow fade text logging with animation ---
+  function logFade(lines, delay = 500) {
+    let i = 0;
+    function showNext() {
+      if (i < lines.length) {
+        const div = document.createElement("div");
+        div.innerHTML = `<i>${lines[i]}</i>`;
+        div.classList.add("fadeLine");
+        consoleEl.appendChild(div);
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+        i++;
+        setTimeout(showNext, delay);
+      }
+    }
+    showNext();
   }
 
   function logAction(text, type = 'info') {
@@ -55,7 +74,6 @@ window.onload = function () {
   let player = {
     name: '',
     race: '',
-    class: '',
     hp: 100,
     maxHp: 100,
     gold: 50,
@@ -70,37 +88,7 @@ window.onload = function () {
 
   // --- World ---
   let world = {
-    'Town Square': {
-      description: 'A foggy town square with flickering lanterns.',
-      exits: { north: 'Town Gates', east: 'Shop', west: 'Tavern', south: 'Graveyard' },
-      loot: {}
-    },
-    'Town Gates': {
-      description: 'Tall iron gates mark the edge of town. Beyond lies the untamed forest.',
-      exits: { south: 'Town Square', north: null },
-      loot: {}
-    },
-    'Shop': {
-      description: 'A crooked shopkeeper grins. Potions and gear line the shelves.',
-      exits: { west: 'Town Square' },
-      shop: true,
-      loot: {}
-    },
-    'Tavern': {
-      description: 'The tavern smells of ale and secrets. Adventurers whisper in the corners.',
-      exits: { east: 'Town Square' },
-      loot: {}
-    },
-    'Graveyard': {
-      description: 'Cracked tombstones and swirling mist. You feel watched.',
-      exits: { north: 'Town Square', south: 'Crypts' },
-      loot: {}
-    },
-    'Crypts': {
-      description: 'A cold stone stairwell descends into the ancient crypts.',
-      exits: { north: 'Graveyard', down: null },
-      loot: {}
-    }
+    ...town
   };
 
   let roomCount = 1;
@@ -233,7 +221,7 @@ window.onload = function () {
       for (const [item, data] of Object.entries(shopItems)) {
         log(`- ${item} (${data.price} gold)`);
       }
-      log('The shopkeeper will also buy any item you bring him.');
+      log('The shopkeeper will also buy any item you bring them.');
     }
     if (loc.loot && Object.keys(loc.loot).length > 0) {
       log("Items on the ground:");
@@ -251,17 +239,17 @@ window.onload = function () {
 
     // Help
     if (cmd === 'help') {
-      log(`Commands:
-- north/south/east/west/up/down (or n/s/e/w/u/d)
-- look
-- get [item], drop [item]
-- equip [item], unequip [weapon|armor]
-- inspect [item], use [item]
-- inventory (or inv), status
-- buy [item], sell [item] (in Shop)
-- fight, run
-- ale, cider (in Tavern)
-- save, load, reset`);
+      log(` 
+  Commands:
+  - north/south/east/west/up/down (n/s/e/w/u/d)
+  - look
+  - get [item], drop [item]
+  - equip [item], unequip weapon, unequip armor
+  - inspect [item], use [item]
+  - inventory (inv), status
+  - buy [item], sell [item] (in Shop)
+  - fight, run
+  - save, load, reset`);
       return;
     }
 
@@ -307,7 +295,6 @@ window.onload = function () {
     if (cmd === 'status') {
       log(`Name: ${player.name}`);
       log(`Race: ${player.race || 'Unchosen'}`);
-      log(`Class: ${player.class || 'Unchosen'}`);
       log(`Level: ${player.level}`);
       log(`XP: ${player.xp}/${xpForNextLevel(player.level)}`);
       log(`HP: ${player.hp}/${player.maxHp}`);
@@ -567,27 +554,61 @@ window.onload = function () {
       // Keep commands lowercase, but preserve name case at step 0
       const cmd = (step === 0) ? cmdRaw : cmdRaw.toLowerCase();
 
-      log(`> ${cmdRaw}`);
+      log(`
+> ${cmdRaw}`);
       processCommand(cmd);
     }
   });
 
   function processCommand(cmd) {
     if (pendingConfirm) {
+      // --- Name confirmation branch (UPDATED) ---
       if (pendingConfirm.type === 'name') {
-        if (cmd.toLowerCase() === 'yes') {
-          step = 1;
-          log(`Hello, ${player.name}. Choose your race: Human, Elf, Orc`);
+        const answer = cmd.toLowerCase();
+
+        if (answer === 'yes') {
           pendingConfirm = null;
-        } else if (cmd.toLowerCase() === 'no') {
-          player.name = '';
-          log("Okay, enter your name again:");
-          pendingConfirm = null;
-        } else {
-          log("Please type 'yes' or 'no'.");
+
+          // Acknowledge the name
+          log(` `);
+          log(`"${player.name}..." the voice repeats softly.`);
+
+          // Lantern glow while the race intro fades in
+          consoleEl.classList.add('lanternGlow');
+
+          const raceIntroLines = [
+            " ",
+            "Lantern light flickers — revealing faint features not quite human, not yet known.",
+            "The voice hums thoughtfully, as if weighing your answer.",
+            '"Tell me... what manner of being stands before me?"',
+            " "
+          ];
+
+          logFade(raceIntroLines, 3000);
+
+          // After narration, show race list and enter race-selection step
+          setTimeout(() => {
+            consoleEl.classList.remove('lanternGlow');
+            log("(Human, Elf, Dwarf, Orc, Halfling, Half-Elf)");
+            step = 1;       // now actually in race selection
+            saveGame();
+          }, raceIntroLines.length * 3000 + 800);
+
+          return; // IMPORTANT: don't fall through
         }
+
+        if (answer === 'no') {
+          player.name = '';
+          pendingConfirm = null;
+          log("Very well... then tell me again — what is your name?");
+          return;
+        }
+
+        log("Please type 'yes' or 'no'.");
         return;
       }
+
+      // --- Load confirmation branch (unchanged) ---
       if (pendingConfirm.type === 'load') {
         if (cmd.toLowerCase() === 'yes') { loadGame(true); pendingConfirm = null; }
         else if (cmd.toLowerCase() === 'no') { log("Cancelled loading save."); pendingConfirm = null; }
@@ -602,22 +623,77 @@ window.onload = function () {
       pendingConfirm = { type: 'name' };
       return;
     }
-    if (step === 1) {
-      const choice = cmd.toLowerCase();
-      if (!['human', 'elf', 'orc'].includes(choice)) return log('Invalid race. Choose: Human, Elf, Orc');
-      player.race = choice.charAt(0).toUpperCase() + choice.slice(1);
-      step = 2;
-      log(`Race set to ${player.race}. Choose your class: Warrior, Mage, Rogue`);
+
+    if (pendingConfirm && pendingConfirm.type === 'name' && cmd.toLowerCase() === 'yes') {
+      pendingConfirm = null;
+
+      // Confirm name
+      log(` `);
+      log(`"${player.name}..." the voice repeats softly.`);
+      step = 0.5; // temporary state between name and race selection
+
+      // Start lantern flicker effect
+      consoleEl.classList.add('lanternGlow');
+
+      // Fade-in narrative lines before race selection
+      const raceIntroLines = [
+          " ",
+          "Lantern light flickers — revealing faint features not quite human, not yet known.",
+          "The voice hums thoughtfully, as if weighing your answer.",
+          '"Tell me... what manner of being stands before me?"',
+          " "
+      ];
+
+      logFade(raceIntroLines, 3000);
+
+      // After narration finishes, show races and remove glow
+      setTimeout(() => {
+        consoleEl.classList.remove('lanternGlow');
+        log("(Human, Elf, Dwarf, Orc, Halfling, Half-Elf)");
+        step = 1;          // now actually enter race-selection phase
+        saveGame();
+      }, raceIntroLines.length * 3000 + 800);
+
       return;
     }
-    if (step === 2) {
+
+    if (pendingConfirm && pendingConfirm.type === 'name' && cmd.toLowerCase() === 'no') {
+      player.name = '';
+      pendingConfirm = null;
+      log("Very well... then tell me again — what is your name?");
+      return;
+    }
+
+    if (step === 1) {
       const choice = cmd.toLowerCase();
-      if (!['warrior', 'mage', 'rogue'].includes(choice)) return log('Invalid class. Choose: Warrior, Mage, Rogue');
-      player.class = choice.charAt(0).toUpperCase() + choice.slice(1);
-      step = 3;
-			saveGame();
-      log(`Class set to ${player.class}. You begin in the Town Square.`);
-      describeLocation();
+      const validRaces = ['human', 'elf', 'dwarf', 'orc', 'halfling', 'half-elf'];
+
+      if (!validRaces.includes(choice)) {
+        log("That is not a known race. Choose: Human, Elf, Dwarf, Orc, Halfling, Half-Elf.");
+        return;
+      }
+
+      player.race = choice.charAt(0).toUpperCase() + choice.slice(1);
+
+      const awakenLines = [
+        " ",
+        "The lantern’s glow dissolves into daylight.",
+        "The voice fades to memory as you open your eyes.",
+        "Cobblestones press beneath your boots — the town of Kalendale awaits.",
+        " "
+      ];
+
+      logFade(awakenLines, 3000);
+
+      setTimeout(() => {
+        consoleEl.classList.remove('lanternGlow');
+        consoleEl.classList.remove('ambientFlicker'); // stop flicker completely
+        log("You awaken in the Town Square, ready to begin your journey.");
+        step = 3;
+        saveGame();
+        describeLocation();
+      }, awakenLines.length * 3000 + 800);
+
       return;
     }
 
@@ -641,14 +717,43 @@ window.onload = function () {
 			// Restart creation
 			localStorage.removeItem('kalendaleSave');
 			localStorage.removeItem('kalendaleReset');
-			log('KBOX Labs welcomes you to the Shadows of Kalendale RPG!');
-			log('Enter your name:');
-			step = 0;
+      const introLines = [
+        " ",
+        "The fog stirs around you as shapes drift in and out of sight. Lantern light flickers somewhere in the dark.",
+        "A soft, distant voice breaks the silence...",
+        '"Traveler..."',
+        '"By what name do they call you?"'
+      ];
+
+      // Play the fading intro
+      logFade(introLines, 3000);
+
+      // After the last line, start the ambient flicker
+      setTimeout(() => {
+        consoleEl.classList.add("ambientFlicker");
+      }, introLines.length * 3000 + 1000); // small buffer after final line
+
+      step = 0;
 		}
 	} else {
 		localStorage.removeItem('kalendaleReset');
-		log('KBOX Labs welcomes you to the Shadows of Kalendale RPG!');
-		log('Enter your name:');
-		step = 0;
+    const introLines = [
+      " ",
+      "The fog stirs around you as shapes drift in and out of sight. Lantern light flickers somewhere in the dark.",
+      "A soft, distant voice breaks the silence...",
+      '"Traveler..."',
+      '"By what name do they call you?"'
+    ];
+
+    // Play the fading intro
+    logFade(introLines, 3000);
+
+    // After the last line, start the ambient flicker
+    setTimeout(() => {
+      consoleEl.classList.add("ambientFlicker");
+    }, introLines.length * 3000 + 1000); // small buffer after final line
+
+    step = 0;
+
 	}
 };
