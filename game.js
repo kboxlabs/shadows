@@ -29,6 +29,11 @@ window.onload = function () {
     consoleEl.scrollTop = consoleEl.scrollHeight;
   }
 
+  function logCombat(message) {
+    logAction(message, "combat");
+    log(message);
+  }
+
   // --- Slow fade text logging with animation ---
   function logFade(lines, delay = 500) {
     let i = 0;
@@ -134,17 +139,28 @@ window.onload = function () {
     describeLocation();
   }
 
-  function resetGame(force = false) {
+  function resetGame(force = false, hard = false) {
     const saved = localStorage.getItem('kalendaleSave');
     if (!saved) return log("No save exists to reset.");
+
     if (!force) {
-      log("Are you sure you want to RESET and delete your save? Type 'reset confirm' to proceed.");
+      log("Are you sure you want to RESET and delete your save?");
+      log("Type 'reset confirm' to proceed, or 'reset confirm hard' to also refresh the game cache.");
       return;
     }
+
+    // Remove save and mark reset
     localStorage.removeItem('kalendaleSave');
     localStorage.setItem('kalendaleReset', 'true');
     logAction("Save reset", "info");
     log("Save data cleared. Start a new game.");
+
+    // Optional: perform a hard reload to bypass cache
+    if (hard) {
+      const url = new URL(window.location);
+      url.searchParams.set('nocache', Date.now());
+      window.location.href = url.toString();
+    }
   }
 
   // --- XP / Level ---
@@ -257,11 +273,16 @@ window.onload = function () {
       return;
     }
 
-    // Save/Load/Reset
+    // Save / Load / Reset
     if (cmd === 'save') return saveGame();
     if (cmd === 'load') return loadGame();
-    if (cmd === 'reset') return resetGame();
-    if (cmd === 'reset confirm') return resetGame(true);
+
+    if (cmd.startsWith('reset')) {
+      const parts = cmd.split(' ');
+      const confirm = parts.includes('confirm');
+      const hard = parts.includes('hard');
+      return resetGame(confirm, hard);
+    }
 
     // Movement (blocked during combat)
     if (directions.includes(cmd)) {
@@ -456,8 +477,7 @@ window.onload = function () {
       if (!player.inCombat) {
         player.inCombat = true;
         player.currentMonster = monster;
-        log(`You engage the ${monster.name} in combat!`);
-        logAction(`Engaged ${monster.name}`, "combat");
+        logCombat(`You engage the ${monster.name} in combat!`);
       }
       updateGlow();
 
@@ -478,20 +498,19 @@ window.onload = function () {
 
       // Detailed logging
       if (playerHit === 0) {
-        logAction(`You missed the ${monster.name}!`, "combat");
+        logCombat(`You missed the ${monster.name}!`);
       } else {
-        logAction(`You hit the ${monster.name} for ${playerHit} damage. [${monster.hp > 0 ? monster.hp : 0} HP left]`, "combat");
+        logCombat(`You hit the ${monster.name} for ${playerHit} damage. [${monster.hp > 0 ? monster.hp : 0} HP left]`);
       }
 
       if (monsterHit === 0) {
-        logAction(`The ${monster.name} missed you!`, "combat");
+        logCombat(`The ${monster.name} missed you!`);
       } else {
-        logAction(`${monster.name} hits you for ${monsterHit} damage. [${player.hp > 0 ? player.hp : 0}/${player.maxHp} HP]`, "combat");
+        logCombat(`${monster.name} hits you for ${monsterHit} damage. [${player.hp > 0 ? player.hp : 0}/${player.maxHp} HP]`);
       }
 
       if (player.hp <= 0) {
-        log("You have died. Game over.");
-        logAction("You died", "combat");
+        logCombat("You have died. Game over.");
         inputEl.disabled = true;
         player.inCombat = false;
         player.currentMonster = null;
@@ -500,12 +519,10 @@ window.onload = function () {
       }
 
       if (monster.hp <= 0) {
-        log(`You defeated the ${monster.name}!`);
-        logAction(`Defeated ${monster.name}`, "combat");
+        logCombat(`You defeated the ${monster.name}!`);
         if (monster.loot) {
           player.inventory[monster.loot] = (player.inventory[monster.loot] || 0) + 1;
-          log(`The ${monster.name} dropped ${monster.loot}.`);
-          logAction(`Looted ${monster.loot}`, "item");
+          logCombat(`The ${monster.name} dropped ${monster.loot}.`);
         }
         if (monster.gold) player.gold += monster.gold;
         grantXP(monster.xp || 20);
@@ -524,18 +541,16 @@ window.onload = function () {
     if (cmd === 'run') {
       if (!player.inCombat || !player.currentMonster) return log('You are not in combat.');
       if (Math.random() < 0.55) {
-        log(`You successfully flee from the ${player.currentMonster.name}.`);
-        logAction(`Fled from ${player.currentMonster.name}`, "combat");
+        logCombat(`You successfully flee from the ${player.currentMonster.name}.`);
         player.inCombat = false;
         player.currentMonster = null;
         updateGlow();
       } else {
         const graze = Math.floor(Math.random() * 6) + 1;
         player.hp -= graze;
-        log(`You failed to escape! The ${player.currentMonster.name} grazes you for ${graze} damage.`);
+        logCombat(`You failed to escape! The ${player.currentMonster.name} grazes you for ${graze} damage.`);
         if (player.hp <= 0) {
-          log("You have died. Game over.");
-          logAction("You died", "combat");
+          logCombat("You have died. Game over.");
           inputEl.disabled = true;
           player.inCombat = false;
           player.currentMonster = null;
@@ -546,6 +561,7 @@ window.onload = function () {
     }
 
     log('Unknown command.');
+
   }
 
   // --- Input & Onboarding ---
