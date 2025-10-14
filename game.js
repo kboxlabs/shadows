@@ -23,15 +23,26 @@ window.onload = function () {
   const logWindow = document.getElementById('logWindow');
   const logToggle = document.getElementById('logToggle');
 
-  // --- Log functions ---
-  function log(text) {
-    consoleEl.innerText += `\n${text}`;
+  function log(message, allowHTML = false) {
+    const consoleEl = document.getElementById('console');
+    const entry = document.createElement('div');
+    if (allowHTML) entry.innerHTML = message;
+    else entry.textContent = message;
+    consoleEl.appendChild(entry);
     consoleEl.scrollTop = consoleEl.scrollHeight;
   }
 
   function logCombat(message) {
+    // Convert simple markup to styled spans
+    const html = message
+      .replace(/\*(.*?)\*/g, '<span class="combat-monster">$1</span>') // *monster*
+      .replace(/\[(-?\d+)\]/g, '<span class="combat-damage">[$1]</span>') // [damage]
+      .replace(/\{(\+?\d+)\}/g, '<span class="combat-heal">{$1}</span>')  // {healing}
+      .replace(/!CRIT!/g, '<span class="combat-crit">CRITICAL HIT!</span>');
+
+    // Show in both log and console
     logAction(message, "combat");
-    log(message);
+    log(html, true);
   }
 
   // --- Slow fade text logging with animation ---
@@ -65,9 +76,16 @@ window.onload = function () {
   if (logToggle) {
     logToggle.addEventListener('click', () => {
       logVisible = !logVisible;
+
       if (logVisible) {
         logWindow.style.display = 'block';
         logToggle.textContent = 'Hide Log';
+
+        // 🔽 Always scroll to bottom when the log becomes visible
+        requestAnimationFrame(() => {
+          logWindow.scrollTop = logWindow.scrollHeight;
+        });
+
       } else {
         logWindow.style.display = 'none';
         logToggle.textContent = 'Show Log';
@@ -185,9 +203,11 @@ window.onload = function () {
   // --- Input glow cues ---
   function updateGlow() {
     inputEl.classList.remove('inCombatGlow', 'lowHpGlow');
-    if (player.inCombat) {
-      if (player.hp <= 30) inputEl.classList.add('lowHpGlow');
-      else inputEl.classList.add('inCombatGlow');
+
+    if (player.hp <= 30) {
+      inputEl.classList.add('lowHpGlow');
+    } else if (player.inCombat) {
+      inputEl.classList.add('inCombatGlow');
     }
   }
 
@@ -477,7 +497,7 @@ window.onload = function () {
       if (!player.inCombat) {
         player.inCombat = true;
         player.currentMonster = monster;
-        logCombat(`You engage the ${monster.name} in combat!`);
+        logCombat(`You engage the *${monster.name}* in combat!`);
       }
       updateGlow();
 
@@ -487,30 +507,40 @@ window.onload = function () {
       let playerHit  = Math.floor(Math.random() * 20) + 5 + weaponBonus;
       let monsterHit = Math.max(0, Math.floor(Math.random() * 15) + 3 - armorBonus);
 
-      if (Math.random() < 0.08) playerHit = 0; // player miss
-      if (Math.random() < 0.10) monsterHit = 0; // monster miss
-      if (Math.random() < 0.10) playerHit = Math.floor(playerHit * 1.5); // player crit
-      if (Math.random() < 0.05) monsterHit = Math.floor(monsterHit * 1.5); // monster crit
+      const playerCrit = Math.random() < 0.10;
+      const monsterCrit = Math.random() < 0.05;
+      const playerMiss = Math.random() < 0.08;
+      const monsterMiss = Math.random() < 0.10;
+
+      if (playerMiss) playerHit = 0;
+      if (monsterMiss) monsterHit = 0;
+      if (playerCrit) playerHit = Math.floor(playerHit * 1.5);
+      if (monsterCrit) monsterHit = Math.floor(monsterHit * 1.5);
 
       // Apply results
       monster.hp -= playerHit;
       player.hp  -= monsterHit;
 
-      // Detailed logging
-      if (playerHit === 0) {
-        logCombat(`You missed the ${monster.name}!`);
+      // --- Combat narration ---
+      if (playerMiss) {
+        logCombat(`You swing and miss the *${monster.name}*!`);
+      } else if (playerCrit) {
+        logCombat(`You land a devastating blow on the *${monster.name}* for [${playerHit}] damage! !CRIT!`);
       } else {
-        logCombat(`You hit the ${monster.name} for ${playerHit} damage. [${monster.hp > 0 ? monster.hp : 0} HP left]`);
+        logCombat(`You hit the *${monster.name}* for [${playerHit}] damage. [${monster.hp > 0 ? monster.hp : 0} HP left]`);
       }
 
-      if (monsterHit === 0) {
-        logCombat(`The ${monster.name} missed you!`);
+      if (monsterMiss) {
+        logCombat(`The *${monster.name}* misses you!`);
+      } else if (monsterCrit) {
+        logCombat(`The *${monster.name}* strikes you for [${monsterHit}] damage! !CRIT! [${player.hp > 0 ? player.hp : 0}/${player.maxHp} HP]`);
       } else {
-        logCombat(`${monster.name} hits you for ${monsterHit} damage. [${player.hp > 0 ? player.hp : 0}/${player.maxHp} HP]`);
+        logCombat(`The *${monster.name}* hits you for [${monsterHit}] damage. [${player.hp > 0 ? player.hp : 0}/${player.maxHp} HP]`);
       }
 
+      // --- Combat resolution ---
       if (player.hp <= 0) {
-        logCombat("You have died. Game over.");
+        logCombat("You have fallen. The world fades to black...");
         inputEl.disabled = true;
         player.inCombat = false;
         player.currentMonster = null;
@@ -519,10 +549,10 @@ window.onload = function () {
       }
 
       if (monster.hp <= 0) {
-        logCombat(`You defeated the ${monster.name}!`);
+        logCombat(`You defeated the *${monster.name}*!`);
         if (monster.loot) {
           player.inventory[monster.loot] = (player.inventory[monster.loot] || 0) + 1;
-          logCombat(`The ${monster.name} dropped ${monster.loot}.`);
+          logCombat(`The *${monster.name}* dropped ${monster.loot}.`);
         }
         if (monster.gold) player.gold += monster.gold;
         grantXP(monster.xp || 20);
@@ -531,7 +561,7 @@ window.onload = function () {
         player.currentMonster = null;
         updateGlow();
       } else {
-        log(`The ${monster.name} has ${monster.hp} HP left. You have ${player.hp}/${player.maxHp} HP.`);
+        log(`The *${monster.name}* has ${monster.hp} HP left. You have ${player.hp}/${player.maxHp} HP.`);
         updateGlow();
       }
       return;
@@ -541,16 +571,16 @@ window.onload = function () {
     if (cmd === 'run') {
       if (!player.inCombat || !player.currentMonster) return log('You are not in combat.');
       if (Math.random() < 0.55) {
-        logCombat(`You successfully flee from the ${player.currentMonster.name}.`);
+        logCombat(`You successfully flee from the *${player.currentMonster.name}*.`);
         player.inCombat = false;
         player.currentMonster = null;
         updateGlow();
       } else {
         const graze = Math.floor(Math.random() * 6) + 1;
         player.hp -= graze;
-        logCombat(`You failed to escape! The ${player.currentMonster.name} grazes you for ${graze} damage.`);
+        logCombat(`You failed to escape! The *${player.currentMonster.name}* grazes you for [${graze}] damage.`);
         if (player.hp <= 0) {
-          logCombat("You have died. Game over.");
+          logCombat("You have fallen. The world fades to black...");
           inputEl.disabled = true;
           player.inCombat = false;
           player.currentMonster = null;
@@ -559,8 +589,6 @@ window.onload = function () {
       }
       return;
     }
-
-    log('Unknown command.');
 
   }
 

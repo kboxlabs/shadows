@@ -251,3 +251,79 @@ body::before {
 .lanternGlow {
   animation: lanternFlicker 2.5s ease-in-out 2;
 }
+
+/* === Top Bar Layout (Title + Show Log Button) === */
+#topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto 10px auto;  /* center and add bottom spacing */
+}
+
+/* Keep your fantasy title aesthetic but sized for the top bar */
+#topBar h1 {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1em;
+  color: #38b502;
+  text-shadow: 0 0 8px #4f804f;
+  margin: 0;
+  padding: 0;
+  animation: ambientFlicker 2.5s infinite ease-in-out;
+}
+
+/* Match button style to your CRT theme */
+#topBar #logToggle {
+  background-color: black;
+  color: #0f0;
+  border: 2px solid #060;
+  padding: 5px 10px;
+  font-family: 'Courier New', Courier, monospace;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+#topBar #logToggle:hover {
+  background-color: #111;
+  border-color: #0a0;
+  box-shadow: 0 0 8px rgba(0,255,0,0.3);
+}
+
+/* Responsive tweak for smaller screens */
+@media (max-width: 600px) {
+  #topBar {
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+
+/* --- Combat Text Enhancements --- */
+.combat-text { color: #ddd; }
+.combat-damage { color: #ff5555; font-weight: bold; }
+.combat-heal { color: #8aff8a; font-weight: bold; }
+.combat-monster { font-style: italic; color: #cfcfcf; }
+.combat-crit { color: #ff2222; font-weight: bold; text-shadow: 0 0 6px #ff0000; }
+
+/* === Animated Pulse Effects for Input === */
+@keyframes pulseGreen {
+  0% { box-shadow: 0 0 3px #0f0, inset 0 0 2px #0f0; }
+  50% { box-shadow: 0 0 12px #0f0, inset 0 0 6px #0f0; }
+  100% { box-shadow: 0 0 3px #0f0, inset 0 0 2px #0f0; }
+}
+
+@keyframes pulseRed {
+  0% { box-shadow: 0 0 3px #f00, inset 0 0 2px #f00; }
+  50% { box-shadow: 0 0 12px #f00, inset 0 0 6px #f00; }
+  100% { box-shadow: 0 0 3px #f00, inset 0 0 2px #f00; }
+}
+
+#inputLine.inCombatGlow {
+  border-color: #0f0;
+  animation: pulseGreen 1.5s infinite;
+}
+
+#inputLine.lowHpGlow {
+  border-color: #f00;
+  animation: pulseRed 1.5s infinite;
+}
