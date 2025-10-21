@@ -4,6 +4,22 @@ import { descriptions, milestoneRooms } from './data/rooms.js';
 import { town } from './data/town.js';
 import { RoomGenerator } from './data/roomGenerator.js';
 
+// --- Title Screen Logic ---
+window.addEventListener("DOMContentLoaded", () => {
+  const startScreen = document.getElementById("startScreen");
+  const startButton = document.getElementById("startButton");
+  const gameContainer = document.getElementById("gameContainer");
+
+  if (startButton) {
+    startButton.addEventListener("click", () => {
+      startScreen.style.animation = "fadeOut 1.5s ease forwards";
+      setTimeout(() => {
+        startScreen.style.display = "none";
+        gameContainer.style.display = "flex";
+      }, 1500);
+    });
+  }
+});
 
 // --- Utility to normalize item names (case-insensitive input, canonical output) ---
 function normalizeItemName(input) {

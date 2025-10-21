@@ -5,24 +5,29 @@
   <meta charset="UTF-8">
   <title>Shadows of Kalendale</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css?v=0.2.16">
+  <link rel="stylesheet" href="style.css?v=0.2.17">
 </head>
 
 <body>
-
-  <div id="topBar">
-    <h1>Shadows of Kalendale</h1>
-    <button id="logToggle">Show Log</button>
+  <!-- Start Screen -->
+  <div id="startScreen">
+    <img src="images/kalendale_town.jpg" alt="Kalendale" id="titleImage">
+    <div id="titleOverlay">
+      <h1>Shadows of Kalendale</h1>
+      <p class="subtitle">A tale begins where the lanterns flicker...</p>
+      <button id="startButton">Enter the Mist</button>
+    </div>
   </div>
 
-  <div id="gameContainer">
+  <!-- Game Container -->
+  <div id="gameContainer" style="display:none;">
+    <button id="logToggle">Show Log</button>
     <div id="logWindow" style="display:none;"></div>
     <div id="console"></div>
     <input type="text" id="inputLine" placeholder="Type a command..." autocomplete="off">
   </div>
 
-  <!-- important: must load as module so imports in game.js work -->
-  <script type="module" src="game.js?v=0.2.12"></script>
+  <script type="module" src="game.js?v=0.2.14"></script>
 </body>
 
 </html>
