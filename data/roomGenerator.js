@@ -13,9 +13,9 @@ export const RoomGenerator = (() => {
   const MONSTER_DEPTH_SPREAD = 2;
   
   // === GAME BALANCE CONSTANTS === //
-  export const MONSTER_SPAWN_CHANCE = 0.3; // 30% of rooms have monsters
-  export const LOOT_SPAWN_CHANCE    = 0.2; // 20% of rooms have loot
-  export const MAX_VERTICAL_EXITS   = 2;   // Max up/down exits per dungeon level
+  const MONSTER_SPAWN_CHANCE = 0.3; // 30% of rooms have monsters
+  const LOOT_SPAWN_CHANCE    = 0.2; // 20% of rooms have loot
+  const MAX_VERTICAL_EXITS   = 2;   // Max up/down exits per dungeon level
 
   // internal vertical link counter
   let verticalLinks = 0;
