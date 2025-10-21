@@ -13,9 +13,12 @@ window.addEventListener("DOMContentLoaded", () => {
   if (startButton) {
     startButton.addEventListener("click", () => {
       startScreen.style.animation = "fadeOut 1.5s ease forwards";
+			
       setTimeout(() => {
         startScreen.style.display = "none";
         gameContainer.style.display = "flex";
+				// Start the actual game only after fade completes
+				if (typeof startGame === "function") startGame();
       }, 1500);
     });
   }
@@ -34,7 +37,7 @@ function normalizeItemName(input) {
   return input.charAt(0).toUpperCase() + input.slice(1);
 }
 
-window.onload = function () {
+function startGame() {
   const consoleEl = document.getElementById('console');
   const inputEl = document.getElementById('inputLine');
   const logWindow = document.getElementById('logWindow');
@@ -850,4 +853,4 @@ window.onload = function () {
     step = 0;
 
 	}
-};
+}
