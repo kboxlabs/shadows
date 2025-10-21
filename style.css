@@ -45,24 +45,24 @@ body {
 
 #titleOverlay h1 {
   font-family: 'Cinzel Decorative', serif;
-  font-size: 3em;
-  text-shadow: 0 0 15px #4f804f;
+  font-size: 1.5em;
+  text-shadow: 0 0 5px #4f804f;
   margin-bottom: 0.2em;
 }
 
 .subtitle {
-  font-size: 1.2em;
+  font-size: 1.0em;
   color: #b5c9b5;
-  margin-bottom: 1.5em;
+  margin-bottom: 1.0em;
 }
 
 #startButton {
   background: none;
-  border: 2px solid #0f0;
+  border: 1px solid #0f0;
   color: #0f0;
-  padding: 10px 30px;
+  padding: 5px 15px;
   font-family: 'Courier New', monospace;
-  font-size: 1em;
+  font-size: 1.0em;
   cursor: pointer;
   transition: all 0.3s ease;
   animation: flickerButton 2.5s infinite ease-in-out;
@@ -406,5 +406,6 @@ body::before {
   border-color: #f00;
   animation: pulseRed 1.5s infinite;
 }
+
 
 
