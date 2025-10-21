@@ -33,7 +33,7 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  filter: brightness(80%) blur(0.5px);
+  filter: brightness(100%);
 }
 
 #titleOverlay {
@@ -406,4 +406,5 @@ body::before {
   border-color: #f00;
   animation: pulseRed 1.5s infinite;
 }
+
 
