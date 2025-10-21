@@ -10,3 +10,4 @@ export const monsters = {
     { name: 'Lich Adept', hp: 80, loot: 'Ancient Coin', gold: 40, xp: 100 }
   ]
 };
+

@@ -2,6 +2,7 @@ import { itemData, shopItems } from './data/items.js';
 import { monsters } from './data/monsters.js';
 import { descriptions, milestoneRooms } from './data/rooms.js';
 import { town } from './data/town.js';
+import { RoomGenerator } from './data/roomGenerator.js';
 
 
 // --- Utility to normalize item names (case-insensitive input, canonical output) ---
@@ -216,34 +217,6 @@ window.onload = function () {
   const directions = ['north', 'south', 'east', 'west', 'up', 'down'];
   const directionAliases = { n: 'north', s: 'south', e: 'east', w: 'west', u: 'up', d: 'down' };
 
-  function generateRoom(type) {
-    const id = `${type.charAt(0).toUpperCase() + type.slice(1)} Room #${roomCount++}`;
-    const depth = Object.keys(world).filter(k => k.startsWith(type === 'forest' ? 'Forest' : 'Dungeon')).length + 1;
-    const defaultDesc = descriptions[type][Math.floor(Math.random() * descriptions[type].length)];
-    const desc = (milestoneRooms[type] && milestoneRooms[type][depth]) ? milestoneRooms[type][depth] : defaultDesc;
-
-    let monster = null;
-    if (Math.random() < 0.5) {
-      const pool = monsters[type];
-      const index = Math.min(Math.floor(depth / 3), pool.length - 1);
-      monster = { ...pool[index] };
-    }
-
-    const loot = {};
-    if (Math.random() < 0.4) {
-      const roll = lootTable[Math.floor(Math.random() * lootTable.length)];
-      loot[roll] = 1;
-    }
-
-    const shuffled = directions.slice().sort(() => 0.5 - Math.random());
-    const allowedDirs = shuffled.slice(0, Math.floor(Math.random() * 3) + 1);
-    const exits = {};
-    for (const dir of allowedDirs) exits[dir] = null;
-
-    world[id] = { description: desc, exits, monster, loot };
-    return id;
-  }
-
   function getOppositeDirection(dir) {
     const opposites = { north: 'south', south: 'north', east: 'west', west: 'east', up: 'down', down: 'up' };
     return opposites[dir];
@@ -264,9 +237,12 @@ window.onload = function () {
       log('The shopkeeper will also buy any item you bring them.');
     }
     if (loc.loot && Object.keys(loc.loot).length > 0) {
-      log("Items on the ground:");
-      for (const [item, count] of Object.entries(loc.loot)) log(`- ${item} x${count}`);
+      const lootList = Object.entries(loc.loot)
+        .map(([item, count]) => `${item}${count > 1 ? ` x${count}` : ''}`)
+        .join(', ');
+      log(`You notice ${lootList} on the ground.`);
     }
+
     if (loc.monster) log(`A ${loc.monster.name} lurks here. Type "fight" to engage.`);
   }
 
@@ -304,24 +280,56 @@ window.onload = function () {
       return resetGame(confirm, hard);
     }
 
-    // Movement (blocked during combat)
+    // --- Movement (blocked during combat) ---
     if (directions.includes(cmd)) {
       if (player.inCombat) return log("You can't leave while in combat!");
-      if (!(cmd in loc.exits)) return log("You can't go that way.");
-      if (!loc.exits[cmd]) {
-        // Control region: forest beyond Town Gates; dungeon beyond Crypts/Graveyard south
-        let type;
-        if (player.location.includes('Crypts') || player.location.includes('Dungeon')) type = 'dungeon';
-        else if (player.location.includes('Town Gates') || player.location.includes('Forest')) type = 'forest';
-        else if (player.location === 'Graveyard' && cmd === 'south') type = 'dungeon';
-        else if (player.location === 'Town Gates' && cmd === 'north') type = 'forest';
-        else type = 'forest';
-        const newRoom = generateRoom(type);
-        loc.exits[cmd] = newRoom;
-        world[newRoom].exits[getOppositeDirection(cmd)] = player.location;
+
+      const currentRoom = world[player.location];
+      const exits = currentRoom.exits || {};
+
+      // No such exit
+      if (!(cmd in exits)) return log("You can't go that way.");
+
+      let destId = exits[cmd];
+      let destRoom = world[destId];
+
+      // Decide zone type
+      let zone;
+      if (player.location.includes('Crypts') || player.location.includes('Dungeon')) zone = 'dungeon';
+      else if (player.location.includes('Town Gates') || player.location.includes('Forest')) zone = 'forest';
+      else if (player.location === 'Graveyard' && cmd === 'south') zone = 'dungeon';
+      else if (player.location === 'Town Gates' && cmd === 'north') zone = 'forest';
+      else zone = 'forest';
+
+      // If the destination room doesn't exist yet, generate & normalize it
+      if (!destRoom) {
+        const gen = RoomGenerator.generateRoom(zone, currentRoom, cmd);
+        if (!gen) {
+          log("The way seems blocked by shadows.");
+          return;
+        }
+
+        const newRoomData = normalizeGeneratedRoom(gen);
+        const newRoomId = `${zone.charAt(0).toUpperCase() + zone.slice(1)} Room #${roomCount++}`;
+
+        // Store and link
+        world[newRoomId] = newRoomData;
+        currentRoom.exits[cmd] = newRoomId;
+        const reverse = getOppositeDirection(cmd);
+        if (reverse) newRoomData.exits[reverse] = player.location;
+
+        logAction(`New ${zone} room generated (depth ${newRoomData.depth})`, "move");
+
+        // Move into the new room
+        player.location = newRoomId;
+        describeLocation();
+        return;
       }
-      player.location = loc.exits[cmd];
-      return describeLocation();
+
+      // Otherwise, move into existing room
+      player.location = destId;
+      describeLocation();
+      return;
     }
 
     if (cmd === 'look') return describeLocation();
@@ -589,7 +597,12 @@ window.onload = function () {
       }
       return;
     }
-
+    
+    // --- Unknown command fallback ---
+    else {
+      log(`"${cmd}" - you can’t do that here...`);
+      logAction(`Unknown command: ${cmd}`, "info");
+    }
   }
 
   // --- Input & Onboarding ---
@@ -607,6 +620,18 @@ window.onload = function () {
       processCommand(cmd);
     }
   });
+
+  function normalizeGeneratedRoom(gen) {
+    return {
+      description: gen?.desc || `You step into a dimly lit ${gen?.zone || 'place'}.`,
+      exits: gen?.exits || {},
+      monster: gen?.monster || null,
+      loot: gen?.loot || {},
+      zone: gen?.zone || 'unknown',
+      depth: gen?.depth || 1,
+      discovered: true
+    };
+  }
 
   function processCommand(cmd) {
     if (pendingConfirm) {

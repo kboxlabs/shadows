@@ -25,31 +25,49 @@ export const itemData = {
     type: "weapon",
     attack: 5,
     description: "A sturdy iron sword, reliable for most adventurers.",
-    value: 40
+    value: 260
   },
   "Steel Sword": {
     type: "weapon",
     attack: 8,
     description: "Well-forged steel blade. Sharp and balanced.",
-    value: 80
+    value: 340
+  },
+  "Robe": {
+    type: "armor",
+    defense: 1,
+    description: "Soft and comfortable. Offers protection from the elements but not much else.",
+    value: 10
+  },
+  "Padded Armor": {
+    type: "armor",
+    defense: 3,
+    description: "Light armor offering minimal protection.",
+    value: 30
   },
   "Leather Armor": {
     type: "armor",
-    defense: 2,
-    description: "Light armor offering minimal protection.",
-    value: 20
+    defense: 4,
+    description: "Light armor offering basic protection.",
+    value: 50
   },
   "Chainmail": {
     type: "armor",
-    defense: 5,
-    description: "A suit of interlocked rings providing solid defense.",
-    value: 60
+    defense: 6,
+    description: "A suit of interlocked rings providing good defense.",
+    value: 640
+  },
+  "Scalemail": {
+    type: "armor",
+    defense: 8,
+    description: "A suit of steel scales bound by leather providing solid defense.",
+    value: 935
   },
   "Plate Armor": {
     type: "armor",
-    defense: 8,
+    defense: 12,
     description: "Heavy armor that offers maximum protection.",
-    value: 120
+    value: 1360
   },
   "Healing Potion": {
     type: "consumable",
@@ -69,9 +87,9 @@ export const itemData = {
 };
 
 export const shopItems = {
-  "Iron Sword": { price: 130 },
-  "Steel Sword": { price: 220 },
-  "Chainmail": { price: 140 },
-  "Plate Armor": { price: 360 },
+  "Iron Sword": { price: 260 },
+  "Steel Sword": { price: 340 },
+  "Scalemail": { price: 935 },
+  "Plate Armor": { price: 1360 },
   "Healing Potion": { price: 25 },
 };
