@@ -2,7 +2,11 @@ import { itemData, shopItems } from './data/items.js';
 import { monsters } from './data/monsters.js';
 import { descriptions, milestoneRooms } from './data/rooms.js';
 import { town } from './data/town.js';
-import { RoomGenerator } from './data/roomGenerator.js';
+import { RoomGenerator, determineZone } from './data/roomGenerator.js';
+
+const DROP_GOLD_CHANCE = 0.3;   // 30% chance gold only
+const DROP_LOOT_CHANCE = 0.25;  // 25% chance loot only
+const DROP_BOTH_CHANCE = 0.15;  // 15% chance both
 
 // --- Title Screen Logic ---
 window.addEventListener("DOMContentLoaded", () => {
@@ -313,12 +317,7 @@ function startGame() {
       let destRoom = world[destId];
 
       // Decide zone type
-      let zone;
-      if (player.location.includes('Crypts') || player.location.includes('Dungeon')) zone = 'dungeon';
-      else if (player.location.includes('Town Gates') || player.location.includes('Forest')) zone = 'forest';
-      else if (player.location === 'Graveyard' && cmd === 'south') zone = 'dungeon';
-      else if (player.location === 'Town Gates' && cmd === 'north') zone = 'forest';
-      else zone = 'forest';
+      const zone = determineZone(player, cmd);
 
       // If the destination room doesn't exist yet, generate & normalize it
       if (!destRoom) {
@@ -576,22 +575,57 @@ function startGame() {
       }
 
       if (monster.hp <= 0) {
-        logCombat(`You defeated the *${monster.name}*!`);
-        if (monster.loot) {
-          player.inventory[monster.loot] = (player.inventory[monster.loot] || 0) + 1;
-          logCombat(`The *${monster.name}* dropped ${monster.loot}.`);
+        log(`You defeated the ${monster.name}!`);
+        logAction(`Defeated ${monster.name}`, "combat");
+
+        // --- Randomized reward outcome ---
+        const roll = Math.random();
+        const dropGoldChance = DROP_GOLD_CHANCE;   // 30% chance gold only
+        const dropLootChance = DROP_LOOT_CHANCE;   // 25% chance loot only
+        const dropBothChance = DROP_BOTH_CHANCE;   // 15% chance both
+        const nothingChance = 1 - (dropGoldChance + dropLootChance + dropBothChance);
+
+        let gotSomething = false;
+
+        if (roll < nothingChance) {
+          log("The creature leaves nothing behind.");
+        } else if (roll < nothingChance + dropGoldChance) {
+          if (monster.gold) {
+            player.gold += monster.gold;
+            log(`You find ${monster.gold} gold among the remains.`);
+            logAction(`Looted ${monster.gold} gold`, "item");
+            gotSomething = true;
+          }
+        } else if (roll < nothingChance + dropGoldChance + dropLootChance) {
+          if (monster.loot) {
+            player.inventory[monster.loot] = (player.inventory[monster.loot] || 0) + 1;
+            log(`The ${monster.name} dropped ${monster.loot}.`);
+            logAction(`Looted ${monster.loot}`, "item");
+            gotSomething = true;
+          }
+        } else {
+          if (monster.gold) {
+            player.gold += monster.gold;
+            log(`You find ${monster.gold} gold.`);
+            logAction(`Looted ${monster.gold} gold`, "item");
+          }
+          if (monster.loot) {
+            player.inventory[monster.loot] = (player.inventory[monster.loot] || 0) + 1;
+            log(`The ${monster.name} dropped ${monster.loot}.`);
+            logAction(`Looted ${monster.loot}`, "item");
+          }
+          gotSomething = true;
         }
-        if (monster.gold) player.gold += monster.gold;
+
+        if (!gotSomething) log("Nothing remains but dust.");
+
         grantXP(monster.xp || 20);
         delete loc.monster;
         player.inCombat = false;
         player.currentMonster = null;
         updateGlow();
-      } else {
-        log(`The *${monster.name}* has ${monster.hp} HP left. You have ${player.hp}/${player.maxHp} HP.`);
-        updateGlow();
+        return;
       }
-      return;
     }
 
     // Run

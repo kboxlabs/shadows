@@ -5,6 +5,15 @@ import { monsters } from "./monsters.js";
 import { descriptions } from "./rooms.js";
 import { itemData } from "./items.js";
 
+// --- Determine zone type based on current location and direction ---
+export function determineZone(player, cmd) {
+  if (player.location.includes('Crypts') || player.location.includes('Dungeon')) return 'dungeon';
+  if (player.location.includes('Town Gates') || player.location.includes('Forest')) return 'forest';
+  if (player.location === 'Graveyard' && cmd === 'south') return 'dungeon';
+  if (player.location === 'Town Gates' && cmd === 'north') return 'forest';
+  return 'forest';
+}
+
 export const RoomGenerator = (() => {
   // ---- Configurable parameters ----
   const DUNGEON_EXIT_RANGE = [1, 3];

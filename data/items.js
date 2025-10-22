@@ -2,25 +2,29 @@ export const itemData = {
   "Wolf Fang": {
     type: "misc",
     description: "A sharp fang from a wraith wolf.",
-    value: 5
+    value: 2
+  },
+  "Canine Fang": {
+    type: "misc",
+    description: "A sharp fang from a coyote or wild dog.",
+    value: 1
   },
   "Ancient Coin": {
     type: "misc",
     description: "A coin from a forgotten empire.",
-    value: 10
+    value: 4
   },
   "Gold Nugget": {
     type: "misc",
     description: "A shiny chunk of gold.",
-    value: 20
+    value: 5
   },
   "Rusty Sword": {
     type: "weapon",
     attack: 2,
     description: "An old sword with a dull edge. Better than nothing.",
-    value: 15
+    value: 2
   },
-
   "Iron Sword": {
     type: "weapon",
     attack: 5,
@@ -41,19 +45,19 @@ export const itemData = {
   },
   "Padded Armor": {
     type: "armor",
-    defense: 3,
+    defense: 2,
     description: "Light armor offering minimal protection.",
     value: 30
   },
   "Leather Armor": {
     type: "armor",
-    defense: 4,
+    defense: 3,
     description: "Light armor offering basic protection.",
     value: 50
   },
   "Chainmail": {
     type: "armor",
-    defense: 6,
+    defense: 5,
     description: "A suit of interlocked rings providing good defense.",
     value: 640
   },
@@ -77,12 +81,12 @@ export const itemData = {
   "Torch": {
     type: "utility",
     description: "A simple wooden torch to light your way in the dark.",
-    value: 5
+    value: 2
   },
   "Gemstone": {
     type: "misc",
     description: "A glittering gem. Valuable to merchants, useless in combat.",
-    value: 50
+    value: 10
   }
 };
 
