@@ -626,7 +626,9 @@ function startGame() {
         updateGlow();
         return;
       }
-    }
+		
+	  return;
+    } // closes if (cmd === 'fight')
 
     // Run
     if (cmd === 'run') {
@@ -888,3 +890,4 @@ function startGame() {
 
 	}
 }
+
