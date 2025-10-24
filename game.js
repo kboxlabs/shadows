@@ -124,7 +124,7 @@ function startGame() {
     hp: 100,
     maxHp: 100,
     gold: 50,
-    inventory: {}, // stacked: { "Healing Potion": 2, "Rusty Sword": 1 }
+    inventory: { "Healing Potion": 2, "Rusty Dagger": 1 }, // stacked: { "Healing Potion": 2, "Rusty Dagger": 1 }
     location: 'Town Square',
     equipped: { weapon: null, armor: null },
     inCombat: false,
@@ -228,7 +228,8 @@ function startGame() {
   function updateGlow() {
     inputEl.classList.remove('inCombatGlow', 'lowHpGlow');
 
-    if (player.hp <= 30) {
+    // Glow red when HP is approaching 30%
+    if (player.hp <= player.maxHp/3) {
       inputEl.classList.add('lowHpGlow');
     } else if (player.inCombat) {
       inputEl.classList.add('inCombatGlow');
@@ -245,12 +246,94 @@ function startGame() {
     return opposites[dir];
   }
 
+  // --- Periodic item respawn (data-driven) ---
+  function maybeRespawnItems(loc) {
+    if (!loc || loc.shop || loc.healer || loc.safezone) return;
+
+    // 10% chance to respawn items (tweakable)
+    const ITEM_RESPAWN_RATE = 0.10;
+    if (Math.random() >= ITEM_RESPAWN_RATE) return;
+
+    // Build a pool from itemData that makes sense to find on the ground
+    // (consumables and low-value misc by default)
+    const pool = Object.entries(itemData)
+      .filter(([name, it]) =>
+        it &&
+        (
+          it.type === 'consumable' ||
+          (it.type === 'misc' && ((it.value ?? 0) <= 25))
+        )
+      )
+      .map(([name]) => name);
+
+    // Nothing suitable in the data? Bail gracefully.
+    if (pool.length === 0) return;
+
+    // Pick an item and quantity
+    const item = pool[Math.floor(Math.random() * pool.length)];
+    const amount = (itemData[item].type === 'consumable')
+      ? (Math.random() < 0.5 ? 1 : 2)  // small stacks for consumables
+      : 1;                              // single for misc
+
+    if (!loc.loot) loc.loot = {};
+    loc.loot[item] = (loc.loot[item] || 0) + amount;
+
+    logAction(`Something new glitters in ${player.location}... (${item} x${amount})`, "item");
+  }
+
+  // --- Monster respawn system ---
+  function maybeRespawnMonster(loc) {
+    if (!loc || loc.monster || loc.shop || loc.healer || loc.safezone) return;
+    // 15% chance monster appears
+    if (Math.random() < 0.15) {
+      const zone = inferZoneForAmbush(player.location, loc);
+      const pool = Array.isArray(monsters[zone]) ? monsters[zone] : [];
+      if (pool.length === 0) return;
+      const template = pool[Math.floor(Math.random() * pool.length)];
+      loc.monster = { ...template, hp: template.hp, name: template.name };
+      logAction(`You sense movement... a ${template.name} has returned to ${player.location}.`, "combat");
+    }
+  }
+
+  // --- Random ambush chance when entering rooms ---
+  function maybeAmbushOnEntry(loc) {
+    if (!loc || loc.shop || loc.healer || loc.safezone) return;
+    if (player.inCombat) return;
+
+    const ambushChance = 0.10; // 10% ambush chance
+    if (Math.random() < ambushChance) {
+      const zone = inferZoneForAmbush(player.location, loc);
+      const pool = Array.isArray(monsters[zone]) ? monsters[zone] : [];
+      if (pool.length === 0) return;
+      const template = pool[Math.floor(Math.random() * pool.length)];
+      const ambusher = { ...template, hp: template.hp, name: template.name };
+      loc.monster = ambusher;
+      player.inCombat = true;
+      player.currentMonster = ambusher;
+      log(`\n⚔️ A ${ambusher.name} suddenly attacks as you enter!`);
+      logAction(`Ambushed by ${ambusher.name} while exploring`, "combat");
+    }
+  }
+
+  function inferZoneForAmbush(roomId, roomObj) {
+    // Prefer explicit zone if your generator sets it
+    if (roomObj && roomObj.zone) return roomObj.zone;
+
+    // Fallback: infer from location name
+    const name = String(roomId);
+    if (name.includes('Crypt') || name.includes('Dungeon')) return 'dungeon';
+    if (name.includes('Forest') || name.includes('Gates')) return 'forest';
+
+    // Default to forest if unknown
+    return 'forest';
+  }
+
   function describeLocation() {
     const loc = world[player.location];
     logAction(`Entered ${player.location}`, "move");
     log(`\n== ${player.location} ==`);
     log(loc.description);
-    const exits = Object.entries(loc.exits).map(([d, dest]) => `${d.toUpperCase()} → ${dest || '???'}`).join(', ');
+    const exits = Object.entries(loc.exits).map(([d, dest]) => `${d.toUpperCase()} → ${dest || 'Unknown...'}`).join(', ');
     log(`Exits: ${exits || 'None'}`);
     if (loc.shop) {
       log('The shopkeeper has these items:');
@@ -263,7 +346,7 @@ function startGame() {
       const lootList = Object.entries(loc.loot)
         .map(([item, count]) => `${item}${count > 1 ? ` x${count}` : ''}`)
         .join(', ');
-      log(`You notice ${lootList} on the ground.`);
+      log(`You notice something on the ground: ${lootList}`);
     }
 
     if (loc.monster) log(`A ${loc.monster.name} lurks here. Type "fight" to engage.`);
@@ -287,6 +370,7 @@ function startGame() {
   - inspect [item], use [item]
   - inventory (inv), status
   - buy [item], sell [item] (in Shop)
+  - rest, donate (in church)
   - fight, run
   - save, load, reset`);
       return;
@@ -341,12 +425,17 @@ function startGame() {
         // Move into the new room
         player.location = newRoomId;
         describeLocation();
+        maybeRespawnMonster(world[player.location]);
+        maybeAmbushOnEntry(world[player.location]);
         return;
       }
 
       // Otherwise, move into existing room
       player.location = destId;
       describeLocation();
+      maybeRespawnItems(world[player.location]);
+      maybeRespawnMonster(world[player.location]);
+      maybeAmbushOnEntry(world[player.location]);
       return;
     }
 
@@ -470,32 +559,126 @@ function startGame() {
       return;
     }
 
-    // Use consumables (stacked, one at a time)
+    // --- Generic Use Command for Consumables ---
     if (cmd.startsWith('use ')) {
       const itemName = normalizeItemName(cmd.slice(4).trim());
-      if (player.inventory[itemName] > 0 && itemData[itemName]) {
-        if (itemName === 'Healing Potion') {
-          player.inventory[itemName]--;
-          if (player.inventory[itemName] <= 0) delete player.inventory[itemName];
-          player.hp = Math.min(player.maxHp, player.hp + 30);
-          log(`You feel rejuvenated. Potions left: ${player.inventory[itemName] || 0}`);
-          logAction("Used Healing Potion (+30 HP)", "heal");
-          updateGlow();
-        } else {
-          log(`You can't use ${itemName} right now.`);
+      const item = itemData[itemName];
+
+      if (!player.inventory[itemName]) return log(`You don't have a ${itemName}.`);
+      if (!item) return log(`You can't use ${itemName}.`);
+      if (item.type !== 'consumable') return log(`You can't use ${itemName} right now.`);
+
+      // Consume the item
+      player.inventory[itemName]--;
+      if (player.inventory[itemName] <= 0) delete player.inventory[itemName];
+
+      // If it has healing properties
+      if (item.heal) {
+        const prevHp = player.hp;
+        player.hp = Math.min(player.maxHp, player.hp + item.heal);
+        const healed = player.hp - prevHp;
+
+        log(item.consumeText || `You use the ${itemName}.`);
+        log(`You recover ${healed} HP. (${player.hp}/${player.maxHp})`);
+        logAction(`Used ${itemName} (+${healed} HP)`, "heal");
+        updateGlow();
+      } else {
+        log(item.consumeText || `You use the ${itemName}, but nothing happens.`);
+        logAction(`Used ${itemName}`, "info");
+      }
+
+      return;
+    }
+
+    // --- Church Healing ---
+    if (cmd === 'donate') {
+      const loc = world[player.location];
+      if (!loc.healer) return log("There’s no one here to receive your offering.");
+
+      const healCost = Math.floor(player.maxHp * 0.5); // gold cost scales with max HP
+      if (player.gold < healCost) {
+        log(`The cleric shakes their head sadly. "A donation of ${healCost} gold is required, child."`);
+        return;
+      }
+
+      player.gold -= healCost;
+      player.hp = player.maxHp;
+      log(`You place ${healCost} gold upon the altar. A soft radiance surrounds you — your wounds mend completely.`);
+      logAction(`Healed fully at the Church for ${healCost} gold`, "heal");
+      updateGlow();
+      return;
+    }
+
+    // --- Rest Command (heal small amount, chance of ambush) ---
+    if (cmd === 'rest') {
+      const loc = world[player.location]; // ✅ move to top
+
+      // Block rest in safe zones
+      if (loc.safezone) {
+        log("No camping allowed within the town limits!");
+        return;
+      }
+
+      const healAmount = Math.floor(player.maxHp * 0.1);
+      const ambushBaseChance = 0.30; // 30% base chance
+
+      log("You take a moment to rest...");
+      player.hp = Math.min(player.maxHp, player.hp + healAmount);
+      log(`You recover ${healAmount} HP. (${player.hp}/${player.maxHp})`);
+      logAction(`Rested and healed ${healAmount} HP`, "heal");
+      updateGlow();
+
+      // If a monster is already here, don't stack ambushes
+      if (loc.monster) {
+        log("You remain alert — something is already lurking nearby.");
+        return;
+      }
+
+      // Optional: increase chance by depth (if your generator sets depth)
+      const depth = loc?.depth || 0;
+      const ambushChance = Math.min(ambushBaseChance + depth * 0.05, 0.6); // cap at 60%
+
+      if (Math.random() < ambushChance) {
+        const zone = inferZoneForAmbush(player.location, loc);
+        const pool = Array.isArray(monsters[zone]) ? monsters[zone] : [];
+
+        if (pool.length === 0) {
+          log("You hear movement nearby... but nothing comes of it.");
+          return;
         }
-      } else log(`You don't have a ${itemName}.`);
+
+        const template = pool[Math.floor(Math.random() * pool.length)];
+        if (!template || typeof template.hp !== 'number' || template.hp <= 0) {
+          log("You hear movement nearby... but nothing comes of it.");
+          return;
+        }
+
+        const ambusher = {
+          ...template,
+          hp: Math.max(1, Math.floor(template.hp * 0.8)) // slightly weaker
+        };
+
+        loc.monster = ambusher;
+        player.inCombat = true;
+        player.currentMonster = ambusher;
+
+        log(`\n⚔️ You are ambushed by a ${ambusher.name} in your sleep!`);
+        logAction(`Ambushed by ${ambusher.name} while resting`, "combat");
+      } else {
+        log("You rest peacefully and awaken refreshed.");
+      }
+
       return;
     }
 
     // Tavern Easter egg: Ale & Cider (only in Tavern)
     if (player.location === "Tavern") {
       if (cmd === "ale") {
-        if (player.gold >= 5) {
-          player.gold -= 5;
-          player.hp = Math.min(player.maxHp, player.hp + 5);
-          log("You order a frothy mug of ale. Restores 5 HP.");
-          logAction("Drank Ale (+5 HP)", "heal");
+        if (player.gold >= 2) {
+          player.gold -= 2;
+          player.hp = Math.min(player.maxHp, player.hp + 10);
+          log("You order a frothy mug of ale. Restores 10 HP.");
+          logAction("Drank Ale (+10 HP)", "heal");
           updateGlow();
         } else {
           log("The barkeep frowns. 'No coin, no ale.'");
@@ -503,11 +686,11 @@ function startGame() {
         return;
       }
       if (cmd === "cider") {
-        if (player.gold >= 7) {
-          player.gold -= 7;
-          player.hp = Math.min(player.maxHp, player.hp + 10);
-          log("You sip a sweet cider. Restores 10 HP.");
-          logAction("Drank Cider (+10 HP)", "heal");
+        if (player.gold >= 3) {
+          player.gold -= 3;
+          player.hp = Math.min(player.maxHp, player.hp + 15);
+          log("You sip a sweet cider. Restores 15 HP.");
+          logAction("Drank Cider (+15 HP)", "heal");
           updateGlow();
         } else {
           log("The barkeep shakes his head. 'No coin, no cider.'");
@@ -566,11 +749,34 @@ function startGame() {
 
       // --- Combat resolution ---
       if (player.hp <= 0) {
-        logCombat("You have fallen. The world fades to black...");
-        inputEl.disabled = true;
+        log("You have died...");
+        logAction("You died", "combat");
         player.inCombat = false;
         player.currentMonster = null;
         updateGlow();
+
+        setTimeout(() => {
+          // Flavor message
+          log("\nA distant voice whispers prayers over your fallen form...");
+          log("You awaken beneath the vaulted arches of the Church of Kalendale.");
+          log("The cleric smiles faintly. \"A small donation was required to restore your life.\"");
+
+          // Resurrect logic
+          player.hp = player.maxHp;
+          player.location = "Church of Kalendale";
+          player.gold = 0;
+
+          // Clear any lingering monster from previous room
+          const loc = world[player.location];
+          if (loc) {
+            loc.monster = null;
+          }
+
+          logAction("Resurrected at the Church of Kalendale (all gold lost)", "info");
+          updateGlow();
+          describeLocation();
+        }, 3000); // small delay for immersion
+
         return;
       }
 
@@ -626,8 +832,8 @@ function startGame() {
         updateGlow();
         return;
       }
-		
-	  return;
+			
+			return;
     } // closes if (cmd === 'fight')
 
     // Run
@@ -643,10 +849,35 @@ function startGame() {
         player.hp -= graze;
         logCombat(`You failed to escape! The *${player.currentMonster.name}* grazes you for [${graze}] damage.`);
         if (player.hp <= 0) {
-          logCombat("You have fallen. The world fades to black...");
-          inputEl.disabled = true;
+          log("You have died...");
+          logAction("You died", "combat");
           player.inCombat = false;
           player.currentMonster = null;
+          updateGlow();
+
+          setTimeout(() => {
+            // Flavor message
+            log("\nA distant voice whispers prayers over your fallen form...");
+            log("You awaken beneath the vaulted arches of the Church of Kalendale.");
+            log("The cleric smiles faintly. \"A small donation was required to restore your life.\"");
+
+            // Resurrect logic
+            player.hp = player.maxHp;
+            player.location = "Church of Kalendale";
+            player.gold = 0;
+
+            // Clear any lingering monster from previous room
+            const loc = world[player.location];
+            if (loc) {
+              loc.monster = null;
+            }
+
+            logAction("Resurrected at the Church of Kalendale (all gold lost)", "info");
+            updateGlow();
+            describeLocation();
+          }, 3000); // small delay for immersion
+
+          return;
         }
         updateGlow();
       }
@@ -806,7 +1037,7 @@ function startGame() {
 
       const awakenLines = [
         " ",
-        'The voice lingers for a heartbeat, then drifts away like breath in the cold.',
+        'The voice lingers for a heartbeat, then drifts away like a breath in the cold.',
         'Lanterns sway in the mist, their flames wavering against the coming dark.',
         'Dusk has fallen on the small town of Kalendale.',
       ];
@@ -890,4 +1121,3 @@ function startGame() {
 
 	}
 }
-
