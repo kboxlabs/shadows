@@ -333,7 +333,7 @@ function startGame() {
     logAction(`Entered ${player.location}`, "move");
     log(`\n== ${player.location} ==`);
     log(loc.description);
-    const exits = Object.entries(loc.exits).map(([d, dest]) => `${d.toUpperCase()} → ${dest || 'Unknown...'}`).join(', ');
+    const exits = Object.entries(loc.exits).map(([d, dest]) => `${d.toUpperCase()} → ${dest || '?'}`).join(', ');
     log(`Exits: ${exits || 'None'}`);
     if (loc.shop) {
       log('The shopkeeper has these items:');
@@ -949,7 +949,7 @@ function startGame() {
           setTimeout(() => {
             consoleEl.classList.remove('lanternGlow');
 					  log(" ");
-            log("(Human, Elf, Dwarf, Orc, Halfling, Half-Elf)");
+            log("(Human, Elf, Dwarf, Orc, Halfling)");
             step = 1;       // now actually in race selection
             saveGame(true);
           }, raceIntroLines.length * 3000 + 800);
@@ -1009,7 +1009,7 @@ function startGame() {
       setTimeout(() => {
         consoleEl.classList.remove('lanternGlow');
 				log(" ");
-        log("(Human, Elf, Dwarf, Orc, Halfling, Half-Elf)");
+        log("(Human, Elf, Dwarf, Orc, Halfling)");
         step = 1;          // now actually enter race-selection phase
         saveGame(true);
       }, raceIntroLines.length * 3000 + 800);
@@ -1026,10 +1026,10 @@ function startGame() {
 
     if (step === 1) {
       const choice = cmd.toLowerCase();
-      const validRaces = ['human', 'elf', 'dwarf', 'orc', 'halfling', 'half-elf'];
+      const validRaces = ['human', 'elf', 'dwarf', 'orc', 'halfling'];
 
       if (!validRaces.includes(choice)) {
-        log("That is not a known race. Choose: Human, Elf, Dwarf, Orc, Halfling, Half-Elf.");
+        log("That is not a known race. Choose: Human, Elf, Dwarf, Orc, Halfling");
         return;
       }
 

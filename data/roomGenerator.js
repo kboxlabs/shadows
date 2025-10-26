@@ -19,7 +19,7 @@ export const RoomGenerator = (() => {
   const DUNGEON_EXIT_RANGE = [1, 3];
   const FOREST_EXIT_RANGE  = [2, 3];
   const MAX_VERTICALS_PER_LEVEL = 2;
-  const MONSTER_DEPTH_SPREAD = 2;
+  const MONSTER_DEPTH_SPREAD = 0.2;
   
   // === GAME BALANCE CONSTANTS === //
   const MONSTER_SPAWN_CHANCE = 0.3; // 30% of rooms have monsters
@@ -45,7 +45,7 @@ export const RoomGenerator = (() => {
     if (!pool.length) return null;
 
     // Choose from monsters near current tier with some randomness
-    const tier = Math.min(Math.floor(depth / 3), pool.length - 1);
+    const tier = Math.min(Math.floor(depth / MONSTER_DEPTH_SPREAD), pool.length - 1);
     const candidates = pool.slice(Math.max(0, tier - 1), tier + 2);
     const chosen = candidates[Math.floor(Math.random() * candidates.length)];
 
