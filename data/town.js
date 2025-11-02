@@ -15,7 +15,7 @@ export const town = {
   },
   
   'Shop': {
-    description: 'You are in The Shoppe of Topsy Turvy. Abby the shop keeper smiles warmly. Potions and gear line the shelves in no particular order',
+    description: 'You are in a shop called Kalendale Curiosities. Potions, gear, and other trinkets line the shelves in no particular order.',
     exits: { west: 'Town Square' },
     shop: true,
     loot: {},

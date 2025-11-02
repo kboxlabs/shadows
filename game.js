@@ -1,12 +1,36 @@
-import { itemData, shopItems } from './data/items.js';
-import { monsters } from './data/monsters.js';
-import { descriptions, milestoneRooms } from './data/rooms.js';
-import { town } from './data/town.js';
-import { RoomGenerator, determineZone } from './data/roomGenerator.js';
+// Shadows of Kalendale SUD v0.2.33 — Refactor Release
+// Refactored for code cleanliness and maintainability.
+
+// --- Import Helper Files ---
+
+import { 
+  itemData, 
+  shopItems 
+} from './data/items.js';
+
+import { 
+  monsters 
+} from './data/monsters.js';
+
+import { 
+  descriptions, 
+  milestoneRooms 
+} from './data/rooms.js';
+
+import { 
+  town 
+} from './data/town.js';
+
+import { 
+  RoomGenerator, 
+  determineZone 
+} from './data/roomGenerator.js';
 
 const DROP_GOLD_CHANCE = 0.3;   // 30% chance gold only
 const DROP_LOOT_CHANCE = 0.25;  // 25% chance loot only
 const DROP_BOTH_CHANCE = 0.15;  // 15% chance both
+
+let showPrompts = false;  // suppress visible HP prompts until intro ends
 
 // --- Title Screen Logic ---
 window.addEventListener("DOMContentLoaded", () => {
@@ -40,6 +64,12 @@ function normalizeItemName(input) {
   // Fallback: Title-case first letter only (so unknowns still look decent)
   return input.charAt(0).toUpperCase() + input.slice(1);
 }
+
+//-------------------------------------//
+//                                     //
+//            START THE GAME           //
+//                                     //
+//-------------------------------------//
 
 function startGame() {
   const consoleEl = document.getElementById('console');
@@ -94,6 +124,35 @@ function startGame() {
     logWindow.appendChild(entry);
     logWindow.scrollTop = logWindow.scrollHeight;
   }
+  // --- Unified notifier: logs to console and action log
+  function notify(message, type = 'info', allowHTML = false) {
+    log(message, allowHTML);
+    const plain = String(message).replace(/<[^>]+>/g, '');
+    logAction(plain, type);
+  }
+
+  // --- Clear combat state and refresh glow
+  function clearCombat() {
+    player.inCombat = false;
+    player.currentMonster = null;
+    updateGlow();
+  }
+
+  // --- Unified resurrection flow
+  function resurrectPlayer() {
+    log("\nA distant voice whispers prayers over your fallen form...");
+    log("You awaken beneath the vaulted arches of the Church of Kalendale.");
+    log('The cleric smiles faintly. "A small donation was required to restore your life."');
+    player.hp = player.maxHp;
+    player.location = "Church of Kalendale";
+    player.gold = 0;
+    const loc = world[player.location];
+    if (loc) loc.monster = null;
+    logAction("Resurrected at the Church of Kalendale (all gold lost)", "info");
+    updateGlow();
+    describeLocation();
+  }
+
 
   // --- Hide/Show Log button wiring ---
   let logVisible = true;
@@ -124,7 +183,7 @@ function startGame() {
     hp: 100,
     maxHp: 100,
     gold: 50,
-    inventory: { "Healing Potion": 2, "Rusty Dagger": 1 }, // stacked: { "Healing Potion": 2, "Rusty Dagger": 1 }
+    inventory: { "Healing Potion": 1, "Rusty Dagger": 1 }, // stacked: { "Healing Potion": 2, "Rusty Dagger": 1 }
     location: 'Town Square',
     equipped: { weapon: null, armor: null },
     inCombat: false,
@@ -132,6 +191,8 @@ function startGame() {
     level: 1,
     xp: 0
   };
+
+  if (showPrompts) updatePrompt();
 
   // --- World ---
   let world = {
@@ -212,13 +273,12 @@ function startGame() {
     player.xp += amount;
     log(`You gained ${amount} XP.`);
     logAction(`Gained ${amount} XP`, "info");
-    while (player.xp >= xpForNextLevel(player.level)) {
-      player.xp -= xpForNextLevel(player.level);
+    for (let threshold = xpForNextLevel(player.level); player.xp >= threshold; player.xp -= threshold, threshold = xpForNextLevel(player.level)) {
       player.level++;
       const hpGain = 10 + Math.floor(Math.random() * 6);
       player.maxHp += hpGain;
       player.hp = player.maxHp;
-      log(`*** You are now Level ${player.level}! Max HP +${hpGain}. HP fully restored. ***`);
+      notify(`*** You are now Level ${player.level}! Max HP +${hpGain}. HP fully restored. ***`, "info");
       logAction(`Leveled up to ${player.level}`, "info");
       updateGlow();
     }
@@ -226,13 +286,27 @@ function startGame() {
 
   // --- Input glow cues ---
   function updateGlow() {
-    inputEl.classList.remove('inCombatGlow', 'lowHpGlow');
+    updatePrompt();
+  }
 
-    // Glow red when HP is approaching 30%
-    if (player.hp <= player.maxHp/3) {
+  // --- Update input prompt to show current HP and refresh glow ---
+  function updatePrompt() {
+    const inputEl = document.getElementById('inputLine');
+    if (!inputEl) return; 
+
+    // update placeholder text
+    inputEl.placeholder = `HP:${player.hp}/${player.maxHp}`;
+
+    // refresh glow state each time HP is updated
+    inputEl.classList.remove('lowHpGlow', 'inCombatGlow');
+
+    // red glow when low HP
+    if (player.hp <= player.maxHp / 3) {
       inputEl.classList.add('lowHpGlow');
+
+    // green glow during combat
     } else if (player.inCombat) {
-      inputEl.classList.add('inCombatGlow');
+     inputEl.classList.add('inCombatGlow');
     }
   }
 
@@ -336,11 +410,11 @@ function startGame() {
     const exits = Object.entries(loc.exits).map(([d, dest]) => `${d.toUpperCase()} → ${dest || '?'}`).join(', ');
     log(`Exits: ${exits || 'None'}`);
     if (loc.shop) {
-      log('The shopkeeper has these items:');
+      log('Abby the shopkeeper directs your attention to a nearby sign:');
       for (const [item, data] of Object.entries(shopItems)) {
         log(`- ${item} (${data.price} gold)`);
       }
-      log('The shopkeeper will also buy any item you bring them.');
+      log(`Abby says: "I'll also give you a good price for any valuables you find!" `);
     }
     if (loc.loot && Object.keys(loc.loot).length > 0) {
       const lootList = Object.entries(loc.loot)
@@ -469,7 +543,7 @@ function startGame() {
       if (player.gold >= cost) {
         player.gold -= cost;
         player.inventory[itemName] = (player.inventory[itemName] || 0) + 1;
-        log(`You bought a ${itemName} for ${cost} gold.`);
+        notify(`You bought a ${itemName} for ${cost} gold.`, "item");
         logAction(`Bought ${itemName}`, "item");
       } else log("You don’t have enough gold.");
       return;
@@ -484,7 +558,7 @@ function startGame() {
       player.inventory[itemName]--;
       if (player.inventory[itemName] <= 0) delete player.inventory[itemName];
       player.gold += sellValue;
-      log(`You sold ${itemName} for ${sellValue} gold.`);
+      notify(`You sold ${itemName} for ${sellValue} gold.`, "item");
       logAction(`Sold ${itemName}`, "item");
       return;
     }
@@ -496,7 +570,7 @@ function startGame() {
         player.inventory[itemName] = (player.inventory[itemName] || 0) + 1;
         loc.loot[itemName]--;
         if (loc.loot[itemName] <= 0) delete loc.loot[itemName];
-        log(`You picked up a ${itemName}.`);
+        notify(`You picked up a ${itemName}.`, "item");
         logAction(`Picked up ${itemName}`, "item");
       } else log(`There's no ${itemName} here.`);
       return;
@@ -509,7 +583,7 @@ function startGame() {
         player.inventory[itemName]--;
         if (player.inventory[itemName] <= 0) delete player.inventory[itemName];
         loc.loot[itemName] = (loc.loot[itemName] || 0) + 1;
-        log(`You dropped a ${itemName}.`);
+        notify(`You dropped a ${itemName}.`, "item");
         logAction(`Dropped ${itemName}`, "item");
       } else log(`You don't have a ${itemName}.`);
       return;
@@ -891,19 +965,46 @@ function startGame() {
     }
   }
 
-  // --- Input & Onboarding ---
+  // --- Display a classic prompt line on the console ---
+  // --- Display single persistent HP prompt ---
+  function showPrompt() {
+    if (!showPrompts) return;   // 🔇 skip until intro done
+
+    // remove any existing prompt lines
+    const oldPrompts = consoleEl.querySelectorAll('.game-prompt');
+    oldPrompts.forEach(p => p.remove());
+
+    // create new prompt element
+    const promptDiv = document.createElement("div");
+    const hpColor = (player.hp <= player.maxHp / 3) ? "#f00" : "#0f0";
+    promptDiv.innerHTML = `<br><span style="color:${hpColor}">HP:${player.hp}/${player.maxHp}></span>`;
+    promptDiv.classList.add("game-prompt");
+    consoleEl.appendChild(promptDiv);
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+  }
+
+  // --- Input handler with classic prompt display ---
   inputEl.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
       const cmdRaw = inputEl.value.trim();
       inputEl.value = '';
       if (!cmdRaw) return;
 
-      // Keep commands lowercase, but preserve name case at step 0
-      const cmd = (step === 0) ? cmdRaw : cmdRaw.toLowerCase();
+      // print prompt+command only AFTER intro
+      if (showPrompts) {
+        const hpColor = (player.hp <= player.maxHp / 3) ? "#f00" : "#0f0";
+        const promptLine = `<span style="color:${hpColor}">HP:${player.hp}/${player.maxHp}></span> ${cmdRaw}`;
+        log(" ");
+        log(promptLine, true);
+      }
 
-      log(`
-> ${cmdRaw}`);
-      processCommand(cmd);
+      // Preserve exact capitalization for name entry (step 0)
+      if (typeof step !== "undefined" && step === 0) {
+        processCommand(cmdRaw); // keep original case
+      } else {
+        processCommand(cmdRaw.toLowerCase());
+      }
+      updatePrompt();
     }
   });
 
@@ -960,10 +1061,12 @@ function startGame() {
         if (answer === 'no') {
           player.name = '';
           pendingConfirm = null;
+          log(" ");
           log("Then tell me again — what is your name?");
           return;
         }
 
+        log(" ");
         log("Please type 'yes' or 'no'.");
         return;
       }
@@ -979,6 +1082,7 @@ function startGame() {
 
     if (step === 0) {
       player.name = cmd; // preserves case
+      log(` `);
       log(`Confirm name '${player.name}'? (yes/no)`);
       pendingConfirm = { type: 'name' };
       return;
@@ -1052,12 +1156,15 @@ function startGame() {
 				log(" ");
         log("You awaken in the town square, the mist curling through lanternlight — your journey quietly begins.");	
         describeLocation();
+        showPrompts = true;
+        showPrompt();  // draw first visible prompt after intro
       }, awakenLines.length * 3000 + 800);
 
       return;
     }
 
     gameLogic(cmd);
+    if (showPrompts) showPrompt();
   }
 
   // --- Quick save on quit ---
@@ -1079,11 +1186,12 @@ function startGame() {
 			localStorage.removeItem('kalendaleReset');
       const introLines = [
         " ",
-        'Fog coils around you, forming and fading like half-remembered dreams. A candle flickers somewhere unseen.',
+        'Fog coils around you, forming and fading like half-remembered dreams.',
+        'A candle flickers somewhere unseen.',
         'A soft voice breaks the silence — distant, yet near...',
-        '"Traveler…?"',
-        '"No…"',
-        '"Wanderer…"',
+        '"...traveler?"',
+        '"No..."',
+        '"Wanderer..."',
         '"By what name do you still remember yourself?"',
       ];
 
@@ -1101,11 +1209,12 @@ function startGame() {
 		localStorage.removeItem('kalendaleReset');
     const introLines = [
       " ",
-      'Fog coils around you, forming and fading like half-remembered dreams. A candle flickers somewhere unseen.',
+      'Fog coils around you, forming and fading like half-remembered dreams.',
+      'A candle flickers somewhere unseen.',
       'A soft voice breaks the silence — distant, yet near...',
-      '"Traveler…?"',
-      '"No…"',
-      '"Wanderer…"',
+      '"...traveler?"',
+      '"No..."',
+      '"Wanderer..."',
       '"By what name do you still remember yourself?"',
     ];
 

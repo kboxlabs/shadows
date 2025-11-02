@@ -1,0 +1,24 @@
+/* 
+  # Shadows of Kalendale SUD (Relaxed Testing)
+  # v0.2.33
+  # Lightweight config for local / GitHub Pages testing
+*/
+
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+Cache-Control: public, max-age=300
+
+/*.css
+  Content-Type: text/css; charset=UTF-8
+  Cache-Control: public, max-age=3600
+
+/*.js
+  Content-Type: application/javascript; charset=UTF-8
+  Cache-Control: public, max-age=3600
+
+/images/*
+  Cache-Control: public, max-age=86400
+
+/index.html
+  Cache-Control: no-cache

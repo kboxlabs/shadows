@@ -379,6 +379,11 @@ body::before {
   }
 }
 
+.game-prompt {
+  color: #0f0;
+  margin-top: 4px;
+}
+
 /* --- Combat Text Enhancements --- */
 .combat-text { color: #ddd; }
 .combat-damage { color: #ff5555; font-weight: bold; }
